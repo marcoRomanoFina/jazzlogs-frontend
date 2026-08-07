@@ -1,0 +1,243 @@
+"use client";
+
+import { useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  artistEditorialFormSchema,
+  artistEditorialFormDefaultValues,
+  type ArtistEditorialFormValues,
+} from "@/lib/validations/artistEditorial";
+import { emptyEditorialBlock } from "@/lib/validations/editorialBlock";
+import {
+  EDITORIAL_BLOCK_TYPES,
+  BLOCK_CONTENT_CATEGORY_OPTIONS,
+} from "@/lib/constants/album";
+import { apiFetch, ApiError } from "@/lib/api";
+import {
+  fieldLabel,
+  fieldInput,
+  fieldSelect,
+  fieldError,
+  btnPrimary,
+  btnGhost,
+  btnIcon,
+  rowCard,
+} from "@/components/admin/formStyles";
+
+type State =
+  | { status: "idle" }
+  | { status: "submitting" }
+  | { status: "error"; message: string }
+  | { status: "done" };
+
+export default function ArtistEditorialForm() {
+  const [state, setState] = useState<State>({ status: "idle" });
+
+  const {
+    register,
+    control,
+    getValues,
+    trigger,
+    formState: { errors },
+  } = useForm<ArtistEditorialFormValues>({
+    resolver: zodResolver(artistEditorialFormSchema),
+    defaultValues: artistEditorialFormDefaultValues,
+  });
+
+  const { fields, append, remove, swap } = useFieldArray({
+    control,
+    name: "blocks",
+  });
+
+  async function onSubmit() {
+    const valid = await trigger();
+    if (!valid) return;
+
+    setState({ status: "submitting" });
+    const values = getValues();
+    try {
+      await apiFetch(`/artists/${values.artistId}/editorial`, {
+        method: "POST",
+        body: JSON.stringify({
+          title: values.title,
+          dek: values.dek?.trim() || undefined,
+          byline: values.byline?.trim() || undefined,
+          blocks: values.blocks.map((b) => ({
+            type: b.type,
+            subhead: b.subhead?.trim() || undefined,
+            text: b.text,
+            contentCategory: b.contentCategory,
+          })),
+        }),
+      });
+      setState({ status: "done" });
+    } catch (err) {
+      setState({
+        status: "error",
+        message:
+          err instanceof ApiError
+            ? `${err.status}: ${err.message}`
+            : "No se pudo guardar.",
+      });
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <label className={fieldLabel} htmlFor="artistId">
+          Artist ID *
+        </label>
+        <input id="artistId" className={fieldInput} {...register("artistId")} />
+        {errors.artistId && (
+          <p className={fieldError}>{errors.artistId.message}</p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <label className={fieldLabel} htmlFor="title">
+            Title *
+          </label>
+          <input id="title" className={fieldInput} {...register("title")} />
+          {errors.title && <p className={fieldError}>{errors.title.message}</p>}
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className={fieldLabel} htmlFor="dek">
+            Dek
+          </label>
+          <textarea
+            id="dek"
+            rows={2}
+            className={fieldInput}
+            {...register("dek")}
+          />
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className={fieldLabel} htmlFor="byline">
+            Byline
+          </label>
+          <input id="byline" className={fieldInput} {...register("byline")} />
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <span className={fieldLabel + " mb-0"}>Bloques</span>
+          <button
+            type="button"
+            className={btnGhost}
+            onClick={() => append(emptyEditorialBlock)}
+          >
+            + Agregar bloque
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {fields.map((field, index) => (
+            <div key={field.id} className={rowCard}>
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <select
+                  className={fieldSelect + " w-36"}
+                  {...register(`blocks.${index}.type` as const)}
+                >
+                  {EDITORIAL_BLOCK_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  className={fieldSelect + " w-56"}
+                  {...register(`blocks.${index}.contentCategory` as const)}
+                >
+                  {BLOCK_CONTENT_CATEGORY_OPTIONS.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="ml-auto flex gap-1.5">
+                  <button
+                    type="button"
+                    className={btnIcon}
+                    disabled={index === 0}
+                    onClick={() => swap(index, index - 1)}
+                    aria-label="Mover arriba"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    className={btnIcon}
+                    disabled={index === fields.length - 1}
+                    onClick={() => swap(index, index + 1)}
+                    aria-label="Mover abajo"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    className={btnIcon}
+                    onClick={() => remove(index)}
+                    aria-label="Eliminar bloque"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <input
+                className={fieldInput + " mb-2"}
+                placeholder="Subhead (opcional)"
+                {...register(`blocks.${index}.subhead` as const)}
+              />
+
+              <textarea
+                rows={3}
+                className={fieldInput}
+                placeholder="Texto del bloque…"
+                {...register(`blocks.${index}.text` as const)}
+              />
+              {errors.blocks?.[index]?.text && (
+                <p className={fieldError}>
+                  {errors.blocks[index]?.text?.message}
+                </p>
+              )}
+            </div>
+          ))}
+
+          {fields.length === 0 && (
+            <p className="text-sm text-[rgba(233,230,223,.5)]">
+              Todavía no agregaste ningún bloque.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 border-t border-[rgba(233,230,223,.12)] pt-5">
+        <button
+          type="button"
+          className={btnPrimary + " self-start"}
+          disabled={state.status === "submitting"}
+          onClick={onSubmit}
+        >
+          {state.status === "submitting" ? "Guardando…" : "Guardar editorial"}
+        </button>
+        {state.status === "error" && (
+          <p className="text-sm text-[#e9a3a3]">{state.message}</p>
+        )}
+        {state.status === "done" && (
+          <p className="text-sm font-medium text-[#7fbf7f]">
+            Editorial guardada con éxito.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
