@@ -11,12 +11,17 @@ import LikeButton from "@/components/app/LikeButton";
 import LoadingNotes from "@/components/app/LoadingNotes";
 import Pager from "@/components/app/Pager";
 import { ApiError, type Page } from "@/lib/api";
-import { fetchAlbumSpotlight, type AlbumSpotlight } from "@/lib/albums";
+import { fetchFeaturedTracks, type FeaturedTrack } from "@/lib/albums";
 import {
   fetchEditorials,
   fetchFeaturedEditorial,
+  fetchLastLog,
+  fetchRecentAlbumEditorials,
+  type CatalogueEditorial,
   type EditorialOwnerType,
   type EditorialSummary,
+  type LastLogAlbumEditorial,
+  type RecentAlbumEditorial,
 } from "@/lib/editorials";
 
 const FILTERS = [
@@ -46,8 +51,19 @@ function formatDate(iso: string): string {
     .toUpperCase();
 }
 
-function editorialHref(e: { type: EditorialOwnerType }): string {
-  return e.type === "ARTIST" ? "/editorial/artist" : "/editorial/album";
+function editorialHref(e: {
+  type: EditorialOwnerType;
+  ownerId: string;
+  contextId: string | null;
+}): string {
+  if (e.type === "ARTIST") return `/editorial/artist?id=${e.ownerId}`;
+  // A track editorial lives inside its album's page, anchored at that
+  // track's section — contextId is the containing album's id (ownerId here
+  // is the track's own id, which the album page can't do anything with).
+  if (e.type === "TRACK" && e.contextId) {
+    return `/editorial/album?id=${e.contextId}#track-${e.ownerId}`;
+  }
+  return `/editorial/album?id=${e.ownerId}`;
 }
 
 function Cover({
@@ -75,6 +91,73 @@ function Cover({
   );
 }
 
+// Downsampled canvas average — good enough for an ambient tint, not trying
+// to find a "dominant" color. Resolves null on any failure (load error, or
+// a CORS-tainted canvas if the CDN doesn't send permissive headers) so the
+// caller can just skip the effect rather than crash. Routed through our own
+// /api/image-proxy first — Spotify's CDN doesn't send permissive CORS
+// headers, so reading pixels straight off it taints the canvas every time.
+function extractAverageColor(src: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const size = 24;
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(null);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, size, size);
+        const { data } = ctx.getImageData(0, 0, size, size);
+        let r = 0;
+        let g = 0;
+        let b = 0;
+        const pixelCount = data.length / 4;
+        for (let i = 0; i < data.length; i += 4) {
+          r += data[i];
+          g += data[i + 1];
+          b += data[i + 2];
+        }
+        resolve(
+          `rgb(${Math.round(r / pixelCount)}, ${Math.round(g / pixelCount)}, ${Math.round(b / pixelCount)})`,
+        );
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = `/api/image-proxy?url=${encodeURIComponent(src)}`;
+  });
+}
+
+// A raw photo-average is often too dark/muddy to read as large text on this
+// page's dark background — push it toward white by `amount` to get a lighter
+// tint of the same hue instead, still one that visibly ties to the cover.
+function brighten(rgb: string, amount: number): string {
+  const channels = rgb.match(/\d+/g);
+  if (!channels) return rgb;
+  const [r, g, b] = channels.map(Number);
+  const lighten = (c: number) => Math.round(c + (255 - c) * amount);
+  return `rgb(${lighten(r)}, ${lighten(g)}, ${lighten(b)})`;
+}
+
+// The card's own resting color (`#2a2621` → rgb(42, 38, 33)) nudged toward the
+// section's tint by `ratio` — a light wash, not a repaint, so the card still
+// reads as "the same card" rather than switching to the cover's color.
+const CARD_BASE: [number, number, number] = [42, 38, 33];
+function mixWithCardBase(rgb: string, ratio: number): string {
+  const channels = rgb.match(/\d+/g);
+  if (!channels) return "#2a2621";
+  const [r, g, b] = channels.map(Number);
+  const mix = (c: number, base: number) => Math.round(base + (c - base) * ratio);
+  return `rgb(${mix(r, CARD_BASE[0])}, ${mix(g, CARD_BASE[1])}, ${mix(b, CARD_BASE[2])})`;
+}
+
 export default function ArchivePage() {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [qInput, setQInput] = useState("");
@@ -84,16 +167,55 @@ export default function ArchivePage() {
   const [featured, setFeatured] = useState<EditorialSummary | null | undefined>(
     undefined,
   );
-  const [spotlight, setSpotlight] = useState<AlbumSpotlight | null | undefined>(
-    undefined,
-  );
-  const [recentlyFiled, setRecentlyFiled] = useState<EditorialSummary[] | null>(
-    null,
-  );
+  const [lastLog, setLastLog] = useState<
+    LastLogAlbumEditorial | null | undefined
+  >(undefined);
+  const [recentlyFiled, setRecentlyFiled] = useState<
+    RecentAlbumEditorial[] | null
+  >(null);
+  const [featuredTracks, setFeaturedTracks] = useState<
+    FeaturedTrack[] | null
+  >(null);
   const [totalCount, setTotalCount] = useState<number | null>(null);
-  const [grid, setGrid] = useState<Page<EditorialSummary> | null>(null);
+  const [grid, setGrid] = useState<Page<CatalogueEditorial> | null>(null);
   const [gridLoading, setGridLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // OR, not AND — the page should keep showing the loading state as long as
+  // ANY of these hasn't resolved yet, not only while none of them have.
+  const initialLoading =
+    featured === undefined ||
+    lastLog === undefined ||
+    recentlyFiled === null ||
+    featuredTracks === null ||
+    grid === null;
+
+  const [featuredColor, setFeaturedColor] = useState<string | null>(null);
+  const [spotlightColor, setSpotlightColor] = useState<string | null>(null);
+
+  // Pull the ambient tint color once, off each section's own cover — not
+  // re-run on every render, just when the image itself changes.
+  useEffect(() => {
+    if (!featured?.ownerImageUrl) return;
+    let cancelled = false;
+    extractAverageColor(featured.ownerImageUrl).then((color) => {
+      if (!cancelled) setFeaturedColor(color);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [featured?.ownerImageUrl]);
+
+  useEffect(() => {
+    if (!lastLog?.imageUrl) return;
+    let cancelled = false;
+    extractAverageColor(lastLog.imageUrl).then((color) => {
+      if (!cancelled) setSpotlightColor(color);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [lastLog?.imageUrl]);
 
   // Debounce the search box so we don't fire a request per keystroke.
   useEffect(() => {
@@ -126,8 +248,8 @@ export default function ArchivePage() {
   }, []);
 
   useEffect(() => {
-    fetchEditorials({ type: "ALBUM", size: 8 })
-      .then((p) => setRecentlyFiled(p.content))
+    fetchRecentAlbumEditorials()
+      .then(setRecentlyFiled)
       .catch((err) =>
         setError(
           err instanceof ApiError ? err.message : "Couldn't load the archive.",
@@ -135,17 +257,23 @@ export default function ArchivePage() {
       );
   }, []);
 
-  // The spotlight is the most recently published ALBUM editorial — not the
-  // curated "featured" one (that's a separate, admin-picked flag and could
-  // be an older piece). Independent of `featured` entirely: find the latest
-  // album editorial, then pull the lean /spotlight teaser for that album
-  // (title/dek/byline + which tracks have their own editorial).
   useEffect(() => {
-    fetchEditorials({ type: "ALBUM", size: 1 })
-      .then((p) => p.content[0]?.ownerId)
-      .then((albumId) => (albumId ? fetchAlbumSpotlight(albumId) : null))
-      .then(setSpotlight)
-      .catch(() => setSpotlight(null));
+    fetchFeaturedTracks()
+      .then(setFeaturedTracks)
+      .catch((err) =>
+        setError(
+          err instanceof ApiError ? err.message : "Couldn't load the archive.",
+        ),
+      );
+  }, []);
+
+  // The last log is the most recently published ALBUM editorial — not the
+  // curated "featured" one (that's a separate, admin-picked flag and could
+  // be an older piece). Independent of `featured` entirely.
+  useEffect(() => {
+    fetchLastLog()
+      .then(setLastLog)
+      .catch(() => setLastLog(null));
   }, []);
 
   useEffect(() => {
@@ -165,30 +293,26 @@ export default function ArchivePage() {
       .finally(() => setGridLoading(false));
   }, [filter, q, page]);
 
-  // A marquee only reads as one with enough cards to make a full, seamless
-  // lap — with just a couple, duplicating them still leaves it looking like
-  // it's stuttering between two near-empty copies, so fall back to a plain
-  // static row instead.
-  const enoughForMarquee = (recentlyFiled?.length ?? 0) >= 6;
+  // Always an infinite carousel, however many editorials came back (capped at
+  // 10 by the fetch above) — the items list is duplicated so the strip has a
+  // second copy to scroll into once the first one clears the viewport.
   const marqueeItems = useMemo(
-    () =>
-      recentlyFiled && enoughForMarquee
-        ? [...recentlyFiled, ...recentlyFiled]
-        : (recentlyFiled ?? []),
-    [recentlyFiled, enoughForMarquee],
+    () => (recentlyFiled ? [...recentlyFiled, ...recentlyFiled] : []),
+    [recentlyFiled],
   );
 
-  // OR, not AND — the page should keep showing the loading state as long as
-  // ANY of these hasn't resolved yet, not only while none of them have.
-  const initialLoading =
-    featured === undefined ||
-    spotlight === undefined ||
-    recentlyFiled === null ||
-    grid === null;
+  // Always the section's own color once it's known — no scroll-linked
+  // blending here, just the (lightened, for legibility) tint itself.
+  const featuredTextColor = featuredColor
+    ? brighten(featuredColor, 0.55)
+    : "#d99b10";
+  const spotlightTextColor = spotlightColor
+    ? brighten(spotlightColor, 0.55)
+    : "#d99b10";
 
   return (
     <>
-      <Navbar active="Editorials" />
+      <Navbar />
 
       <div className="flex justify-between border-y border-[#d99b10] py-3 font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.16em]">
         <span>The full editorial archive</span>
@@ -226,11 +350,22 @@ export default function ArchivePage() {
         <div className="animate-[jazzlogs-fade-up_.6s_ease-out]">
           {/* Lead */}
           {featured && (
-            <>
-              <div className="mt-10 mb-4 font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.2em] text-[rgba(233,230,223,.55)]">
+            <div className="relative mt-8 py-12">
+              {/* No page-wide ambient wash — just the page's usual dark
+                  background out here. The dynamic, per-cover color lives
+                  only on the card itself (its background tint and text
+                  color below). */}
+              <div className="mb-4 font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.2em] text-[rgba(233,230,223,.55)]">
                 FEATURED
               </div>
-              <div className="relative grid min-h-[440px] grid-cols-1 items-center gap-11 rounded-[18px] bg-[#2a2621] p-11 text-[#e9e6df] md:grid-cols-[1fr_300px]">
+              <div
+                className="relative z-10 grid min-h-[440px] grid-cols-1 items-center gap-11 rounded-[18px] bg-[#2a2621] p-11 text-[#e9e6df] md:grid-cols-[1fr_300px]"
+                style={{
+                  backgroundColor: featuredColor
+                    ? mixWithCardBase(featuredColor, 0.4)
+                    : undefined,
+                }}
+              >
                 <Link
                   href={editorialHref(featured)}
                   className="absolute inset-0 z-0"
@@ -238,7 +373,7 @@ export default function ArchivePage() {
                 />
                 <div className="pointer-events-none relative z-[1] flex h-full flex-col justify-between">
                   <div className="flex items-center gap-3.5 font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium tracking-[.12em] text-[rgba(233,230,223,.6)]">
-                    <span className="text-[#d99b10]">
+                    <span style={{ color: featuredTextColor }}>
                       {featured.type} EDITORIAL
                     </span>
                     {featured.releaseYear != null && (
@@ -249,7 +384,10 @@ export default function ArchivePage() {
                     )}
                   </div>
                   <div className="mt-7">
-                    <div className="text-balance text-[42px] leading-[.92] font-extrabold tracking-[-.045em] text-[#d99b10] sm:text-[62px]">
+                    <div
+                      className="text-balance text-[42px] leading-[.92] font-extrabold tracking-[-.045em] sm:text-[62px]"
+                      style={{ color: featuredTextColor }}
+                    >
                       {featured.title}
                     </div>
                     <div className="mt-2.5 text-[15px] font-semibold text-[rgba(233,230,223,.7)]">
@@ -262,11 +400,10 @@ export default function ArchivePage() {
                       </div>
                     )}
                     {featured.previewText && (
-                      <div className="relative mt-5 max-h-[130px] max-w-[560px] overflow-hidden border-t border-[rgba(233,230,223,.14)] pt-4">
-                        <div className="text-[14px] leading-[1.65] font-normal text-[rgba(233,230,223,.5)] italic">
+                      <div className="mt-5 max-w-[560px] border-t border-[rgba(233,230,223,.14)] pt-4">
+                        <div className="line-clamp-5 text-[14px] leading-[1.65] font-normal text-[rgba(233,230,223,.5)] italic">
                           {featured.previewText}
                         </div>
-                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#2a2621] via-[#2a2621]/70 via-40% to-transparent" />
                       </div>
                     )}
                     <div className="mt-[18px] inline-block">
@@ -286,24 +423,151 @@ export default function ArchivePage() {
                   <Cover e={featured} />
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Featured tracks — admin-curated, up to 6 at a time */}
+          {featuredTracks && (
+            <>
+              <div className="mt-8 flex items-baseline justify-between">
+                <span className="font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.2em] text-[rgba(233,230,223,.55)]">
+                  FEATURED TRACKS
+                </span>
+              </div>
+              {featuredTracks.length === 0 ? (
+                <div className="mt-6 flex justify-center">
+                  <div
+                    className="flex max-w-[300px] flex-col gap-2.5 rounded-[3px] bg-[#ddc373] p-6 text-center text-[#1c1b18] shadow-[0_14px_28px_rgba(0,0,0,.35)]"
+                    style={{ transform: "rotate(-1.4deg)" }}
+                  >
+                    <div className="text-[18px] leading-[1.15] font-extrabold tracking-[-.02em]">
+                      No featured tracks yet.
+                    </div>
+                    <p className="m-0 text-[13.5px] leading-[1.5] font-medium text-[rgba(28,27,24,.75)]">
+                      Nothing tagged as Featured just yet — check back later.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-3">
+                  {featuredTracks.map((t) => (
+                    <Link
+                      key={t.id}
+                      href={`/editorial/album?id=${t.albumId}`}
+                      className="relative z-10 flex flex-col overflow-hidden rounded-2xl border border-[rgba(233,230,223,.15)] bg-[rgba(233,230,223,.03)] no-underline transition-colors hover:border-[#d99b10] hover:bg-[rgba(217,155,16,.05)]"
+                    >
+                      <div className="relative h-[180px] w-full overflow-hidden bg-[#2a2621]">
+                        <Cover
+                          e={{ ownerImageUrl: t.imageUrl, ownerName: t.trackName }}
+                        />
+                      </div>
+                      <div className="flex flex-1 flex-col p-5">
+                        <div className="font-[family-name:var(--font-dm-mono)] text-[9.5px] font-medium uppercase tracking-[.12em] text-[rgba(233,230,223,.5)]">
+                          {t.trackName} · {t.albumName}
+                        </div>
+                        <div className="text-balance mt-2.5 text-[19px] leading-[1.1] font-extrabold tracking-[-.03em] text-[#e9e6df]">
+                          {t.title}
+                        </div>
+                        {t.dek && (
+                          <div className="mt-2 line-clamp-3 text-[13px] leading-[1.5] text-[rgba(233,230,223,.62)]">
+                            {t.dek}
+                          </div>
+                        )}
+                        <div className="mt-auto flex items-center justify-between gap-3 pt-4 font-[family-name:var(--font-dm-mono)] text-[9px] font-medium uppercase tracking-[.1em] text-[rgba(233,230,223,.45)]">
+                          <span className="flex items-center gap-2">
+                            {t.byline ? `${t.byline} · ` : ""}
+                            {formatDate(t.createdAt)}
+                            {t.logNumber && (
+                              <span className="text-[#d99b10]">
+                                LOG #{t.logNumber}
+                              </span>
+                            )}
+                          </span>
+                          <LikeButton
+                            variant="inline"
+                            initialCount={t.likeCount}
+                            initialLiked={t.likedByCurrentUser}
+                            readOnly
+                          />
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </>
           )}
 
-          {/* The Last Log — spotlight on the album behind the featured piece */}
-          {spotlight && (
-            <>
-              <div className="mt-19 flex items-baseline justify-between">
+          {/* The Last Log — spotlight on the most recent album editorial */}
+          {lastLog && (
+            <div className="relative mt-4 py-12">
+              {/* No page-wide ambient wash — just the page's usual dark
+                  background out here. The dynamic, per-cover color lives
+                  only on the card itself (its background tint and text
+                  color below). */}
+              <div className="flex items-baseline justify-between">
                 <span className="font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.2em] text-[rgba(233,230,223,.55)]">
                   THE LAST LOG
                 </span>
               </div>
-              <div className="mt-4 overflow-hidden rounded-[18px] bg-[#2a2621]">
-                <Link href="/editorial/album" className="block no-underline">
-                  <div className="relative h-[220px] w-full overflow-hidden sm:h-[320px]">
-                    {spotlight.imageUrl ? (
+              <div
+                className="relative z-10 mt-4 overflow-hidden rounded-[18px] bg-[#2a2621]"
+                style={{
+                  backgroundColor: spotlightColor
+                    ? mixWithCardBase(spotlightColor, 0.4)
+                    : undefined,
+                }}
+              >
+                <div className="relative grid grid-cols-1 items-center gap-11 p-11 md:grid-cols-[1fr_360px]">
+                  <Link
+                    href={`/editorial/album?id=${lastLog.id}`}
+                    className="absolute inset-0 z-0"
+                    aria-label={lastLog.title}
+                  />
+                  <div className="pointer-events-none relative z-[1]">
+                    <div className="flex items-center gap-3 font-[family-name:var(--font-dm-mono)] text-[10px] font-medium tracking-[.14em] text-[rgba(233,230,223,.6)]">
+                      <span style={{ color: spotlightTextColor }}>
+                        ALBUM EDITORIAL
+                      </span>
+                      {lastLog.releaseYear != null && (
+                        <>
+                          <span>·</span>
+                          <span>{lastLog.releaseYear}</span>
+                        </>
+                      )}
+                    </div>
+                    <div
+                      className="text-balance mt-4 text-[44px] leading-[.9] font-extrabold tracking-[-.045em] sm:text-[62px]"
+                      style={{ color: spotlightTextColor }}
+                    >
+                      {lastLog.title}
+                    </div>
+                    <div className="mt-3 text-[15px] font-semibold text-[rgba(233,230,223,.7)]">
+                      {lastLog.artistName}
+                    </div>
+                    {lastLog.dek && (
+                      <div className="mt-4 max-w-[560px] text-[17px] leading-[1.55] text-[rgba(233,230,223,.82)]">
+                        {lastLog.dek}
+                      </div>
+                    )}
+                    <div className="mt-[18px]">
+                      <LikeButton
+                        variant="inline"
+                        initialCount={lastLog.likeCount}
+                        initialLiked={lastLog.likedByCurrentUser}
+                        readOnly
+                      />
+                    </div>
+                    <div className="mt-3 font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.1em] text-[rgba(233,230,223,.5)]">
+                      {lastLog.byline ? `${lastLog.byline} · ` : ""}
+                      {lastLog.postedAt ? formatDate(lastLog.postedAt) : ""}
+                    </div>
+                  </div>
+                  <div className="relative z-[1] h-[360px] w-full overflow-hidden rounded-[14px] md:w-[360px]">
+                    {lastLog.imageUrl ? (
                       <Image
-                        src={spotlight.imageUrl}
-                        alt={spotlight.name}
+                        src={lastLog.imageUrl}
+                        alt={lastLog.title}
                         fill
                         unoptimized
                         className="scale-[1.06] object-cover"
@@ -312,74 +576,44 @@ export default function ArchivePage() {
                       <ImagePlaceholder />
                     )}
                   </div>
-                  <div className="p-6 sm:p-11">
-                    <div className="flex items-center gap-3 font-[family-name:var(--font-dm-mono)] text-[10px] font-medium tracking-[.14em] text-[rgba(233,230,223,.6)]">
-                      <span className="text-[#d99b10]">ALBUM EDITORIAL</span>
-                      {spotlight.releaseYear != null && (
-                        <>
-                          <span>·</span>
-                          <span>{spotlight.releaseYear}</span>
-                        </>
-                      )}
-                    </div>
-                    <div className="text-balance mt-4 text-[44px] leading-[.9] font-extrabold tracking-[-.045em] text-[#d99b10] sm:text-[72px]">
-                      {spotlight.editorialTitle ?? spotlight.name}
-                    </div>
-                    <div className="mt-3 text-[15px] font-semibold text-[rgba(233,230,223,.7)]">
-                      {spotlight.artistName}
-                    </div>
-                    {spotlight.editorialDek && (
-                      <div className="mt-4 max-w-[640px] text-[17px] leading-[1.55] text-[rgba(233,230,223,.82)]">
-                        {spotlight.editorialDek}
-                      </div>
-                    )}
-                    <div className="mt-[18px]">
-                      <LikeButton
-                        variant="inline"
-                        initialCount={spotlight.editorialLikeCount}
-                        initialLiked={spotlight.editorialLikedByCurrentUser}
-                        readOnly
-                      />
-                    </div>
-                    <div className="mt-3 font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.1em] text-[rgba(233,230,223,.5)]">
-                      {spotlight.editorialByline
-                        ? `${spotlight.editorialByline} · `
-                        : ""}
-                      {spotlight.postedAt ? formatDate(spotlight.postedAt) : ""}
-                    </div>
-                  </div>
-                </Link>
+                </div>
 
-                {spotlight.tracks.length > 0 && (
-                  <div className="border-t border-[rgba(233,230,223,.16)] px-6 pt-5 pb-7 sm:px-11">
-                    <div className="pb-1 font-[family-name:var(--font-dm-mono)] text-[9.5px] font-medium uppercase tracking-[.2em] text-[rgba(233,230,223,.45)]">
+                {lastLog.tracks.length > 0 && (
+                  <div className="px-6 pt-1 pb-7 sm:px-11">
+                    <div className="pb-1 font-[family-name:var(--font-dm-mono)] text-[9.5px] font-medium uppercase tracking-[.2em]" style={{ color: spotlightTextColor }}>
                       Track editorials
                     </div>
                     <div className="-mx-3 grid grid-cols-1 sm:grid-cols-2 sm:gap-x-[36px]">
-                      {spotlight.tracks.map((t) => (
+                      {lastLog.tracks.map((t) => (
                         <Link
                           key={t.id}
-                          href="/editorial/album"
-                          className="grid grid-cols-[36px_1fr] items-baseline gap-4 border-b border-[rgba(233,230,223,.14)] px-3 py-[18px] no-underline transition-colors hover:bg-[rgba(217,155,16,.08)]"
+                          href={`/editorial/album?id=${lastLog.id}`}
+                          className="grid grid-cols-[36px_1fr] items-baseline gap-4 border-b border-[rgba(233,230,223,.18)] px-3 py-[18px] no-underline transition-colors hover:bg-[rgba(233,230,223,.06)]"
                         >
-                          <span className="font-[family-name:var(--font-dm-mono)] text-[12px] text-[rgba(217,155,16,.85)]">
+                          <span
+                            className="font-[family-name:var(--font-dm-mono)] text-[12px]"
+                            style={{ color: spotlightTextColor }}
+                          >
                             {String(t.trackNumber ?? 0).padStart(2, "0")}
                           </span>
                           <div>
                             <div className="flex items-baseline justify-between gap-3">
-                              <div className="text-balance text-[21px] leading-[1.05] font-extrabold tracking-[-.03em]">
-                                {t.editorialTitle}
+                              <div
+                                className="text-balance text-[21px] leading-[1.05] font-extrabold tracking-[-.03em]"
+                                style={{ color: spotlightTextColor }}
+                              >
+                                {t.title}
                               </div>
                               <LikeButton
                                 variant="inline"
-                                initialCount={t.editorialLikeCount}
-                                initialLiked={t.editorialLikedByCurrentUser}
+                                initialCount={t.likeCount}
+                                initialLiked={t.likedByCurrentUser}
                                 readOnly
                               />
                             </div>
-                            {t.editorialDek && (
+                            {t.dek && (
                               <div className="mt-1.5 text-[12.5px] leading-[1.45] text-[rgba(233,230,223,.6)]">
-                                {t.editorialDek}
+                                {t.dek}
                               </div>
                             )}
                           </div>
@@ -389,44 +623,33 @@ export default function ArchivePage() {
                   </div>
                 )}
               </div>
-            </>
+            </div>
           )}
 
           {/* Recently filed — auto-scrolling strip */}
           {recentlyFiled && recentlyFiled.length > 0 && (
             <>
-              <div className="mt-19 flex items-baseline justify-between">
+              <div className="mt-8 flex items-baseline justify-between">
                 <span className="font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.2em] text-[rgba(233,230,223,.55)]">
                   Recently filed
                 </span>
               </div>
-              <div
-                className={
-                  enoughForMarquee
-                    ? "mt-[22px] overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_3%,#000_97%,transparent)] [-webkit-mask-image:linear-gradient(90deg,transparent,#000_3%,#000_97%,transparent)]"
-                    : "mt-[22px]"
-                }
-              >
-                <div
-                  className={
-                    "flex gap-5 " +
-                    (enoughForMarquee
-                      ? "w-max animate-[jazzlogs-marquee_44s_linear_infinite] hover:[animation-play-state:paused]"
-                      : "flex-wrap")
-                  }
-                >
+              <div className="mt-[22px] overflow-hidden">
+                <div className="flex w-max animate-[jazzlogs-marquee_44s_linear_infinite] gap-5 hover:[animation-play-state:paused]">
                   {marqueeItems.map((e, i) => (
                     <div
                       key={`${e.id}-${i}`}
-                      className="relative w-[320px] flex-none overflow-hidden rounded-2xl border border-[rgba(233,230,223,.22)] transition-colors hover:border-[#d99b10] hover:bg-[rgba(217,155,16,.05)]"
+                      className="relative z-10 w-[320px] flex-none overflow-hidden rounded-2xl border border-[rgba(233,230,223,.22)] transition-colors hover:border-[#d99b10] hover:bg-[rgba(217,155,16,.05)]"
                     >
                       <Link
-                        href={editorialHref(e)}
+                        href={`/editorial/album?id=${e.albumId}`}
                         className="absolute inset-0 z-0"
                         aria-label={e.title}
                       />
                       <div className="pointer-events-none relative h-[200px] overflow-hidden bg-[#2a2621]">
-                        <Cover e={e} />
+                        <Cover
+                          e={{ ownerImageUrl: e.imageUrl, ownerName: e.albumName }}
+                        />
                       </div>
                       <div className="relative z-[1] flex min-h-[210px] flex-col gap-4 p-6">
                         <div className="pointer-events-none">
@@ -434,8 +657,7 @@ export default function ArchivePage() {
                             {e.title}
                           </div>
                           <div className="mt-2 text-[13px] font-semibold text-[rgba(233,230,223,.6)]">
-                            {e.ownerName}
-                            {e.contextName ? ` · ${e.contextName}` : ""}
+                            {e.albumName} · {e.artistName}
                           </div>
                           {e.dek && (
                             <div className="mt-3 text-[13px] leading-[1.5] text-[rgba(233,230,223,.62)]">
@@ -447,7 +669,12 @@ export default function ArchivePage() {
                           <span className="pointer-events-none">
                             {e.byline}
                           </span>
-                          <span className="pointer-events-none">
+                          <span className="pointer-events-none flex items-center gap-3">
+                            {e.logNumber && (
+                              <span className="text-[#d99b10]">
+                                LOG #{e.logNumber}
+                              </span>
+                            )}
                             <LikeButton
                               variant="inline"
                               initialCount={e.likeCount}
@@ -465,7 +692,7 @@ export default function ArchivePage() {
           )}
 
           {/* The Catalogue */}
-          <div className="mt-22 flex items-baseline justify-between">
+          <div className="mt-10 flex items-baseline justify-between">
             <span className="font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.2em] text-[rgba(233,230,223,.55)]">
               {filter === "all"
                 ? "The catalogue"
@@ -520,9 +747,7 @@ export default function ArchivePage() {
             />
           ) : grid && grid.content.length > 0 ? (
             <div className="mt-6 animate-[jazzlogs-fade-up_.5s_ease-out] border-t-[1.5px] border-[#d99b10]">
-              {grid.content.map((e, i) => {
-                const logNumber =
-                  grid.totalElements - (grid.number * grid.size + i);
+              {grid.content.map((e) => {
                 return (
                   <div
                     key={e.id}
@@ -563,9 +788,13 @@ export default function ArchivePage() {
                         <span className="font-[family-name:var(--font-dm-mono)] text-[9.5px] font-medium uppercase tracking-[.1em] text-[rgba(233,230,223,.4)]">
                           {formatDate(e.createdAt)}
                         </span>
-                        <span className="font-[family-name:var(--font-dm-mono)] text-[9.5px] font-medium tracking-[.1em] text-[#d99b10]">
-                          LOG #{String(logNumber).padStart(3, "0")}
-                        </span>
+                        {/* null for ARTIST editorials — an artist doesn't
+                            belong to one album's catalog number. */}
+                        {e.logNumber && (
+                          <span className="font-[family-name:var(--font-dm-mono)] text-[9.5px] font-medium tracking-[.1em] text-[#d99b10]">
+                            LOG #{e.logNumber}
+                          </span>
+                        )}
                         <span className="mt-0.5">
                           <LikeButton
                             variant="inline"

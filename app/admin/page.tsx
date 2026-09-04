@@ -55,6 +55,12 @@ const TOOLS = [
       "Cargar moods, contexts, rhythms e instrumentos de un track existente a partir de su Track ID.",
   },
   {
+    href: "/admin/tracks/featured",
+    title: "Featured tracks",
+    description:
+      "Agregar o sacar un track de Featured Tracks (máximo 6) a partir de su Track ID.",
+  },
+  {
     href: "/admin/artists/tags",
     title: "Tags de artista",
     description:
