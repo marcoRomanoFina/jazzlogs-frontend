@@ -30,7 +30,7 @@ const MOST_LISTENED = [
 export default function HomePage() {
   return (
     <>
-      <Navbar active="Home" />
+      <Navbar />
 
       <div className="flex items-center justify-between border-y border-[#d99b10] py-3 font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.16em]">
         <span>Thursday, Jul 11, 2026</span>

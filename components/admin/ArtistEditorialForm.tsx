@@ -125,15 +125,8 @@ export default function ArtistEditorialForm() {
       </div>
 
       <div>
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3">
           <span className={fieldLabel + " mb-0"}>Bloques</span>
-          <button
-            type="button"
-            className={btnGhost}
-            onClick={() => append(emptyEditorialBlock)}
-          >
-            + Agregar bloque
-          </button>
         </div>
 
         <div className="flex flex-col gap-3">
@@ -217,6 +210,14 @@ export default function ArtistEditorialForm() {
               Todavía no agregaste ningún bloque.
             </p>
           )}
+
+          <button
+            type="button"
+            className={btnGhost + " self-start"}
+            onClick={() => append(emptyEditorialBlock)}
+          >
+            + Agregar bloque
+          </button>
         </div>
       </div>
 

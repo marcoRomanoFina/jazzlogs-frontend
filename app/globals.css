@@ -25,6 +25,13 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Browsers don't give <button> a pointer cursor by default the way they do
+   for <a> — every clickable button across the app should still read as
+   clickable on hover. */
+button:not(:disabled) {
+  cursor: pointer;
+}
+
 /* JazzLogs loading state — see components/app/LoadingNotes.tsx */
 @keyframes jazzlogs-note-bounce {
   0%,
@@ -48,6 +55,45 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* The "write a note" modal — a sticky note that gets slapped down onto the
+   screen, not just faded in: overshoots slightly past its resting size/tilt
+   then settles back, via the cubic-bezier on the element itself. */
+@keyframes jazzlogs-note-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.82) rotate(-8deg);
+  }
+  60% {
+    transform: scale(1.03) rotate(1deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(-1.5deg);
+  }
+}
+
+/* Other modals over the same dimmed backdrop (e.g. "write a review") that
+   aren't meant to read as a sticky note — a plain settle, no rotation. */
+@keyframes jazzlogs-modal-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes jazzlogs-backdrop-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 

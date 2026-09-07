@@ -28,12 +28,18 @@ export default function LoginForm() {
     setSubmitting(true);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: values.email,
       password: values.password,
     });
 
     setSubmitting(false);
+
+    // Dev convenience — copy this straight into Postman's Bearer token field.
+    // Never logged in production builds.
+    if (process.env.NODE_ENV !== "production" && data.session) {
+      console.log("access_token:", data.session.access_token);
+    }
 
     if (error) {
       if (error.message.toLowerCase().includes("invalid login credentials")) {

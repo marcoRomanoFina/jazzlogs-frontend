@@ -12,6 +12,7 @@ import LoadingNotes from "@/components/app/LoadingNotes";
 import Pager from "@/components/app/Pager";
 import { ApiError, type Page } from "@/lib/api";
 import { fetchFeaturedTracks, type FeaturedTrack } from "@/lib/albums";
+import { extractAverageColor, brighten, mixWithBase } from "@/lib/colorTint";
 import {
   fetchEditorials,
   fetchFeaturedEditorial,
@@ -91,71 +92,12 @@ function Cover({
   );
 }
 
-// Downsampled canvas average — good enough for an ambient tint, not trying
-// to find a "dominant" color. Resolves null on any failure (load error, or
-// a CORS-tainted canvas if the CDN doesn't send permissive headers) so the
-// caller can just skip the effect rather than crash. Routed through our own
-// /api/image-proxy first — Spotify's CDN doesn't send permissive CORS
-// headers, so reading pixels straight off it taints the canvas every time.
-function extractAverageColor(src: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    const img = new window.Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      try {
-        const size = 24;
-        const canvas = document.createElement("canvas");
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          resolve(null);
-          return;
-        }
-        ctx.drawImage(img, 0, 0, size, size);
-        const { data } = ctx.getImageData(0, 0, size, size);
-        let r = 0;
-        let g = 0;
-        let b = 0;
-        const pixelCount = data.length / 4;
-        for (let i = 0; i < data.length; i += 4) {
-          r += data[i];
-          g += data[i + 1];
-          b += data[i + 2];
-        }
-        resolve(
-          `rgb(${Math.round(r / pixelCount)}, ${Math.round(g / pixelCount)}, ${Math.round(b / pixelCount)})`,
-        );
-      } catch {
-        resolve(null);
-      }
-    };
-    img.onerror = () => resolve(null);
-    img.src = `/api/image-proxy?url=${encodeURIComponent(src)}`;
-  });
-}
-
-// A raw photo-average is often too dark/muddy to read as large text on this
-// page's dark background — push it toward white by `amount` to get a lighter
-// tint of the same hue instead, still one that visibly ties to the cover.
-function brighten(rgb: string, amount: number): string {
-  const channels = rgb.match(/\d+/g);
-  if (!channels) return rgb;
-  const [r, g, b] = channels.map(Number);
-  const lighten = (c: number) => Math.round(c + (255 - c) * amount);
-  return `rgb(${lighten(r)}, ${lighten(g)}, ${lighten(b)})`;
-}
-
 // The card's own resting color (`#2a2621` → rgb(42, 38, 33)) nudged toward the
 // section's tint by `ratio` — a light wash, not a repaint, so the card still
 // reads as "the same card" rather than switching to the cover's color.
 const CARD_BASE: [number, number, number] = [42, 38, 33];
 function mixWithCardBase(rgb: string, ratio: number): string {
-  const channels = rgb.match(/\d+/g);
-  if (!channels) return "#2a2621";
-  const [r, g, b] = channels.map(Number);
-  const mix = (c: number, base: number) => Math.round(base + (c - base) * ratio);
-  return `rgb(${mix(r, CARD_BASE[0])}, ${mix(g, CARD_BASE[1])}, ${mix(b, CARD_BASE[2])})`;
+  return mixWithBase(rgb, CARD_BASE, ratio);
 }
 
 export default function ArchivePage() {

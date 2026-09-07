@@ -9,7 +9,10 @@ import {
   type TrackEditorialFormValues,
 } from "@/lib/validations/trackEditorial";
 import { emptyEditorialBlock } from "@/lib/validations/editorialBlock";
-import { EDITORIAL_BLOCK_TYPES, BLOCK_CONTENT_CATEGORY_OPTIONS } from "@/lib/constants/album";
+import {
+  EDITORIAL_BLOCK_TYPES,
+  BLOCK_CONTENT_CATEGORY_OPTIONS,
+} from "@/lib/constants/album";
 import { apiFetch, ApiError } from "@/lib/api";
 import {
   fieldLabel,
@@ -42,7 +45,10 @@ export default function TrackEditorialForm() {
     defaultValues: trackEditorialFormDefaultValues,
   });
 
-  const { fields, append, remove, swap } = useFieldArray({ control, name: "blocks" });
+  const { fields, append, remove, swap } = useFieldArray({
+    control,
+    name: "blocks",
+  });
 
   async function onSubmit() {
     const valid = await trigger();
@@ -69,7 +75,10 @@ export default function TrackEditorialForm() {
     } catch (err) {
       setState({
         status: "error",
-        message: err instanceof ApiError ? `${err.status}: ${err.message}` : "No se pudo guardar.",
+        message:
+          err instanceof ApiError
+            ? `${err.status}: ${err.message}`
+            : "No se pudo guardar.",
       });
     }
   }
@@ -81,7 +90,9 @@ export default function TrackEditorialForm() {
           Track ID *
         </label>
         <input id="trackId" className={fieldInput} {...register("trackId")} />
-        {errors.trackId && <p className={fieldError}>{errors.trackId.message}</p>}
+        {errors.trackId && (
+          <p className={fieldError}>{errors.trackId.message}</p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -97,7 +108,12 @@ export default function TrackEditorialForm() {
           <label className={fieldLabel} htmlFor="dek">
             Dek *
           </label>
-          <textarea id="dek" rows={2} className={fieldInput} {...register("dek")} />
+          <textarea
+            id="dek"
+            rows={2}
+            className={fieldInput}
+            {...register("dek")}
+          />
           {errors.dek && <p className={fieldError}>{errors.dek.message}</p>}
         </div>
 
@@ -106,23 +122,25 @@ export default function TrackEditorialForm() {
             Byline *
           </label>
           <input id="byline" className={fieldInput} {...register("byline")} />
-          {errors.byline && <p className={fieldError}>{errors.byline.message}</p>}
+          {errors.byline && (
+            <p className={fieldError}>{errors.byline.message}</p>
+          )}
         </div>
       </div>
 
       <div>
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3">
           <span className={fieldLabel + " mb-0"}>Bloques</span>
-          <button type="button" className={btnGhost} onClick={() => append(emptyEditorialBlock)}>
-            + Agregar bloque
-          </button>
         </div>
 
         <div className="flex flex-col gap-3">
           {fields.map((field, index) => (
             <div key={field.id} className={rowCard}>
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <select className={fieldSelect + " w-36"} {...register(`blocks.${index}.type` as const)}>
+                <select
+                  className={fieldSelect + " w-36"}
+                  {...register(`blocks.${index}.type` as const)}
+                >
                   {EDITORIAL_BLOCK_TYPES.map((t) => (
                     <option key={t} value={t}>
                       {t}
@@ -184,14 +202,26 @@ export default function TrackEditorialForm() {
                 {...register(`blocks.${index}.text` as const)}
               />
               {errors.blocks?.[index]?.text && (
-                <p className={fieldError}>{errors.blocks[index]?.text?.message}</p>
+                <p className={fieldError}>
+                  {errors.blocks[index]?.text?.message}
+                </p>
               )}
             </div>
           ))}
 
           {fields.length === 0 && (
-            <p className="text-sm text-[rgba(233,230,223,.5)]">Todavía no agregaste ningún bloque.</p>
+            <p className="text-sm text-[rgba(233,230,223,.5)]">
+              Todavía no agregaste ningún bloque.
+            </p>
           )}
+
+          <button
+            type="button"
+            className={btnGhost + " self-start"}
+            onClick={() => append(emptyEditorialBlock)}
+          >
+            + Agregar bloque
+          </button>
         </div>
       </div>
 
@@ -204,9 +234,13 @@ export default function TrackEditorialForm() {
         >
           {state.status === "submitting" ? "Guardando…" : "Guardar editorial"}
         </button>
-        {state.status === "error" && <p className="text-sm text-[#e9a3a3]">{state.message}</p>}
+        {state.status === "error" && (
+          <p className="text-sm text-[#e9a3a3]">{state.message}</p>
+        )}
         {state.status === "done" && (
-          <p className="text-sm font-medium text-[#7fbf7f]">Editorial guardada con éxito.</p>
+          <p className="text-sm font-medium text-[#7fbf7f]">
+            Editorial guardada con éxito.
+          </p>
         )}
       </div>
     </div>

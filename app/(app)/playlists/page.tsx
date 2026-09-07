@@ -40,7 +40,7 @@ export default function PlaylistsPage() {
 
   return (
     <>
-      <Navbar active="Playlists" />
+      <Navbar />
 
       <div className="pt-11 pb-2.5">
         <div className="text-[56px] leading-[.9] font-extrabold tracking-[-.05em] text-[#d99b10] sm:text-[80px]">

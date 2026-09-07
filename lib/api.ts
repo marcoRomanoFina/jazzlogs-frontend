@@ -38,9 +38,13 @@ export async function apiFetch<T = unknown>(
     throw new ApiError(body || res.statusText, res.status);
   }
 
-  if (res.status === 204) return undefined as T;
-
-  return (await res.json()) as T;
+  // Several endpoints (e.g. POST/DELETE /likes) return 200/201/204 with no
+  // body at all — only special-casing 204 meant a 200/201 with an empty body
+  // still hit res.json(), which throws on empty input and made a perfectly
+  // successful request look like a failure to the caller.
+  const text = await res.text();
+  if (!text) return undefined as T;
+  return JSON.parse(text) as T;
 }
 
 // Matches Spring Data's PageImpl JSON shape (Page<T> return type on a
@@ -55,16 +59,16 @@ export interface Page<T> {
   last: boolean;
 }
 
+// Matches UserController's actual GET /me response — id is the app-level
+// user id (what NoteDto.userId etc. compare against, not the Supabase auth
+// user id).
 export interface Me {
   id: string;
-  supabaseUserId: string;
-  role: string;
-  status: string;
-  displayName: string;
-  firstName: string;
-  lastName: string;
   email: string;
-  createdAt: string;
-  updatedAt: string;
-  lastLoginAt: string;
+  displayName: string;
+  role: string;
+}
+
+export async function fetchMe(): Promise<Me> {
+  return apiFetch<Me>("/me");
 }

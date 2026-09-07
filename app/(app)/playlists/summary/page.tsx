@@ -19,7 +19,7 @@ export default function PlaylistSummaryPage() {
 
   return (
     <>
-      <Navbar active="Playlists" />
+      <Navbar />
 
       <div className="flex justify-between border-y border-[#d99b10] py-3 font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.16em]">
         <Link href="/logs" className="no-underline">

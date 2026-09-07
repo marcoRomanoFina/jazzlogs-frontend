@@ -37,7 +37,7 @@ export default function SeriesPage() {
 
   return (
     <>
-      <Navbar active="Series" />
+      <Navbar />
 
       <div className="flex justify-between border-y border-[#d99b10] py-3 font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.16em]">
         <span>Guided listening · hand-made</span>

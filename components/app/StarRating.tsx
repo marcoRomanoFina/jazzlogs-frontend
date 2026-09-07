@@ -2,55 +2,136 @@
 
 import { useState } from "react";
 
+// Clipping the *whole* 5-character "★★★★★" string by a % of its total width
+// (the old approach) doesn't land at the visual middle of one star — letter-
+// spacing between glyphs throws the cut point off, so a "half star" visibly
+// lands somewhere other than half of a star. Clipping each star in its own
+// fixed-width box, one at a time, keeps the cut exactly where it says it is
+// regardless of spacing between stars.
+function starFill(value: number, index: number): number {
+  return Math.max(0, Math.min(1, value - (index - 1)));
+}
+
+function StarRow({
+  value,
+  size,
+  fillColor = "#d99b10",
+}: {
+  value: number;
+  size: number;
+  fillColor?: string;
+}) {
+  return (
+    <span
+      className="inline-flex"
+      style={{ gap: Math.round(size * 0.12) }}
+    >
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span
+          key={i}
+          className="relative inline-block"
+          style={{ width: size, height: size, fontSize: size, lineHeight: 1 }}
+        >
+          <span
+            aria-hidden
+            className="absolute inset-0"
+            style={{ color: "rgba(233,230,223,.22)" }}
+          >
+            ★
+          </span>
+          <span
+            aria-hidden
+            className="absolute inset-0 overflow-hidden"
+            style={{ width: `${starFill(value, i) * 100}%`, color: fillColor }}
+          >
+            ★
+          </span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export function AverageStars({
   value,
   size = 16,
+  fillColor,
 }: {
   value: number;
   size?: number;
+  fillColor?: string;
 }) {
-  return (
-    <span className="relative inline-block leading-none">
-      <span
-        style={{ fontSize: size, letterSpacing: size * 0.18, color: "rgba(233,230,223,.22)" }}
-      >
-        ★★★★★
-      </span>
-      <span
-        className="absolute top-0 left-0 overflow-hidden whitespace-nowrap"
-        style={{
-          width: `${(value / 5) * 100}%`,
-          fontSize: size,
-          letterSpacing: size * 0.18,
-          color: "#d99b10",
-        }}
-      >
-        ★★★★★
-      </span>
-    </span>
-  );
+  return <StarRow value={value} size={size} fillColor={fillColor} />;
 }
 
 export function InteractiveStars({
   initial = 0,
   size = 19,
+  disabled = false,
+  title,
+  fillColor,
+  onRate,
 }: {
   initial?: number;
   size?: number;
+  disabled?: boolean;
+  title?: string;
+  fillColor?: string;
+  // Called with the chosen rating (1-5, half steps) — there's no "clear a
+  // rating" endpoint, so clicking a star always sets it, never toggles it off.
+  onRate?: (rating: number) => void;
 }) {
   const [rating, setRating] = useState(initial);
+  // Live preview while the pointer is over a half — falls back to the
+  // committed rating once it leaves, same as any star-picker.
+  const [hover, setHover] = useState<number | null>(null);
+  const displayRating = hover ?? rating;
+  const gap = Math.round(size * 0.12);
+
+  function pick(n: number) {
+    if (disabled) return;
+    setRating(n);
+    onRate?.(n);
+  }
+
   return (
-    <div className="flex gap-[3px]">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => setRating((r) => (r === n ? 0 : n))}
-          style={{ fontSize: size, color: n <= rating ? "#d99b10" : "rgba(233,230,223,.28)" }}
-        >
-          ★
-        </button>
-      ))}
+    <div
+      className="relative inline-block leading-none"
+      title={title}
+      style={{ opacity: disabled ? 0.5 : 1 }}
+    >
+      <StarRow value={displayRating} size={size} fillColor={fillColor} />
+      {/* Two click targets per star (left half / right half), positioned
+          over the row above at the exact same widths/gap — clicking the
+          left half of star N picks N-0.5, the right half picks N whole. */}
+      <div
+        className="absolute inset-0 flex"
+        style={{ gap }}
+        onMouseLeave={() => setHover(null)}
+      >
+        {[1, 2, 3, 4, 5].map((n) => (
+          <div key={n} className="flex" style={{ width: size }}>
+            <button
+              type="button"
+              disabled={disabled}
+              aria-label={`Rate ${n - 0.5} out of 5`}
+              className="h-full flex-1"
+              style={{ cursor: disabled ? "default" : "pointer" }}
+              onClick={() => pick(n - 0.5)}
+              onMouseEnter={() => setHover(n - 0.5)}
+            />
+            <button
+              type="button"
+              disabled={disabled}
+              aria-label={`Rate ${n} out of 5`}
+              className="h-full flex-1"
+              style={{ cursor: disabled ? "default" : "pointer" }}
+              onClick={() => pick(n)}
+              onMouseEnter={() => setHover(n)}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -26,6 +26,18 @@ const TOOLS = [
       "Cargar el personnel de un álbum existente a partir de su Album ID.",
   },
   {
+    href: "/admin/albums/featured",
+    title: "Álbum featured",
+    description:
+      "Marcar la editorial de un álbum existente como la destacada del archive, a partir de su Album ID.",
+  },
+  {
+    href: "/admin/albums/cover-color",
+    title: "Cover color",
+    description:
+      "Curar a mano el color de ambiente de la página de un álbum existente, a partir de su Album ID.",
+  },
+  {
     href: "/admin/tracks/new",
     title: "Nuevo track",
     description:
@@ -65,6 +77,24 @@ const TOOLS = [
     title: "Tags de artista",
     description:
       "Cargar instrumento principal, styles y contexts de un artista existente a partir de su Artist ID.",
+  },
+  {
+    href: "/admin/albums/entry-point",
+    title: "Entry point",
+    description:
+      "Marcar o sacar un álbum/track como puerta de entrada al catálogo de un artista.",
+  },
+  {
+    href: "/admin/albums/remove-personnel",
+    title: "Sacar personnel",
+    description:
+      "Sacar a un artista de la ficha técnica de un álbum, a partir de su Album ID, Artist ID y rol.",
+  },
+  {
+    href: "/admin/artists/remove-similar",
+    title: "Sacar similar artist",
+    description:
+      "Sacar a un artista de la lista de similares curada a mano de otro artista.",
   },
 ];
 

@@ -13,7 +13,7 @@ export interface StickyNoteData {
 export default function StickyNote({ note }: { note: StickyNoteData }) {
   return (
     <div
-      className="flex min-h-[220px] flex-col gap-[15px] rounded-[3px] bg-[#f3e4a8] p-[28px_26px_22px] text-[#1c1b18] shadow-[0_14px_28px_rgba(0,0,0,.35)]"
+      className="flex min-h-[220px] min-w-0 flex-col gap-[15px] rounded-[3px] bg-[#f3e4a8] p-[28px_26px_22px] text-[#1c1b18] shadow-[0_14px_28px_rgba(0,0,0,.35)]"
       style={{ transform: `rotate(${note.rotate ?? -1}deg)` }}
     >
       <div className="flex items-center gap-2">
@@ -26,10 +26,10 @@ export default function StickyNote({ note }: { note: StickyNoteData }) {
           </span>
         )}
       </div>
-      <div className="text-[20px] font-extrabold leading-[1.15] tracking-[-.02em]">
+      <div className="text-[20px] font-extrabold leading-[1.15] tracking-[-.02em] break-words">
         {note.title}
       </div>
-      <p className="m-0 line-clamp-5 text-[16px] font-medium leading-[1.5]">{note.text}</p>
+      <p className="m-0 line-clamp-5 break-words text-[16px] font-medium leading-[1.5]">{note.text}</p>
       <div className="mt-auto flex items-center justify-between gap-3 border-t border-[rgba(28,27,24,.16)] pt-[13px]">
         <span className="text-[11px] font-semibold uppercase tracking-[.04em] text-[rgba(28,27,24,.6)]">
           {note.track ? `${note.track}${note.album ? ` · ${note.album}` : ""}` : `— ${note.name}, ${note.date}`}
