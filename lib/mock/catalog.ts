@@ -78,23 +78,6 @@ export const MOCK_SERIES: MockSeries[] = [
   { id: "first-hour", title: "A first hour of jazz", note: "Never listened before? Start exactly here.", tag: "STARTER", chapters: 5, duration: "46 min" },
 ];
 
-export interface MockReview {
-  title: string;
-  artist: string;
-  stars: number;
-  date: string;
-  likes: number;
-  body: string;
-  standouts: string[];
-}
-
-export const MOCK_REVIEWS: MockReview[] = [
-  { title: "Kind of Blue", artist: "Miles Davis", stars: 5, date: "JUL 9, 2026", likes: 24, body: "The record I measure every other by. Nothing is hurried, nothing is spare — just five musicians agreeing on silence and where to break it.", standouts: ["So What", "Blue in Green"] },
-  { title: "A Love Supreme", artist: "John Coltrane", stars: 5, date: "JUL 2, 2026", likes: 31, body: "Devotion with a structure. I keep coming back to Part III — the way the band lets go without ever losing the thread.", standouts: ["Acknowledgement", "Pursuance"] },
-  { title: "Waltz for Debby", artist: "Bill Evans", stars: 4, date: "JUN 21, 2026", likes: 12, body: "The room noise of the Village Vanguard is half the album. Evans plays like he is thinking out loud and inviting you in.", standouts: ["Waltz for Debby", "My Foolish Heart"] },
-  { title: "Saxophone Colossus", artist: "Sonny Rollins", stars: 4, date: "JUN 10, 2026", likes: 9, body: "‘St. Thomas’ is the obvious joy, but it's ‘Blue 7’ where Rollins shows how much a solo can actually argue a point.", standouts: ["St. Thomas", "Blue 7"] },
-];
-
 export interface MockNote {
   ts: string;
   album: string;

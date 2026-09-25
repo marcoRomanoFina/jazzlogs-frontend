@@ -7,7 +7,7 @@ export default function CheckEmailBanner() {
   if (searchParams.get("message") !== "check-email") return null;
 
   return (
-    <div className="mt-6 rounded-xl border border-[rgba(217,159,16,.4)] bg-[rgba(217,159,16,.1)] px-4 py-3 text-sm text-[#e9e6df]">
+    <div className="mt-6 rounded-xl border border-[rgba(217,159,16,.4)] bg-[rgba(217,159,16,.1)] px-4 py-3 text-sm text-[#E8DCC0]">
       Revisá tu email para confirmar tu cuenta antes de iniciar sesión.
     </div>
   );

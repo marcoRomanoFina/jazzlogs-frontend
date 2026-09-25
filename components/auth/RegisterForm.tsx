@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { registerSchema, type RegisterFormValues } from "@/lib/validations/auth";
 
 const inputClass =
-  "w-full rounded-xl border-[1.5px] border-[rgba(233,230,223,.4)] bg-transparent px-4 py-[15px] font-medium text-[15px] text-[#e9e6df] outline-none placeholder:text-[rgba(233,230,223,.35)] transition-colors focus:border-[#d99b10] focus:bg-[rgba(233,230,223,.06)]";
+  "w-full rounded-xl border-[1.5px] border-[rgba(232,220,192,.4)] bg-transparent px-4 py-[15px] font-medium text-[15px] text-[#E8DCC0] outline-none placeholder:text-[rgba(232,220,192,.35)] transition-colors focus:border-[#F6D013] focus:bg-[rgba(232,220,192,.06)]";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -63,7 +63,7 @@ export default function RegisterForm() {
       <div className="mt-8">
         <label
           htmlFor="email"
-          className="mb-[9px] block font-[family-name:var(--font-dm-mono)] text-[10px] font-medium uppercase tracking-[.16em] text-[rgba(233,230,223,.75)]"
+          className="mb-[9px] block font-[family-name:var(--font-dm-sans)] text-[10px] font-medium uppercase tracking-[.16em] text-[rgba(232,220,192,.75)]"
         >
           Email
         </label>
@@ -82,7 +82,7 @@ export default function RegisterForm() {
       <div className="mt-[18px]">
         <label
           htmlFor="password"
-          className="mb-[9px] block font-[family-name:var(--font-dm-mono)] text-[10px] font-medium uppercase tracking-[.16em] text-[rgba(233,230,223,.75)]"
+          className="mb-[9px] block font-[family-name:var(--font-dm-sans)] text-[10px] font-medium uppercase tracking-[.16em] text-[rgba(232,220,192,.75)]"
         >
           Password
         </label>
@@ -101,7 +101,7 @@ export default function RegisterForm() {
       <div className="mt-[18px]">
         <label
           htmlFor="confirmPassword"
-          className="mb-[9px] block font-[family-name:var(--font-dm-mono)] text-[10px] font-medium uppercase tracking-[.16em] text-[rgba(233,230,223,.75)]"
+          className="mb-[9px] block font-[family-name:var(--font-dm-sans)] text-[10px] font-medium uppercase tracking-[.16em] text-[rgba(232,220,192,.75)]"
         >
           Confirm password
         </label>
@@ -122,12 +122,12 @@ export default function RegisterForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="mt-8 w-full rounded-full bg-[#d99b10] py-[17px] font-bold text-[15px] text-[#1c1b18] transition-colors hover:bg-[#e6a614] disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-8 w-full rounded-full bg-[#F6D013] py-[17px] font-bold text-[15px] text-[#1C1A14] transition-colors hover:bg-[#e6a614] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? "Creando cuenta…" : "Create account"}
       </button>
 
-      <p className="mt-4 text-center text-[11.5px] leading-[1.5] text-[rgba(233,230,223,.5)]">
+      <p className="mt-4 text-center text-[11.5px] leading-[1.5] text-[rgba(232,220,192,.5)]">
         By continuing you agree to our terms and privacy policy.
       </p>
     </form>

@@ -1,4 +1,4 @@
-import { archivo, dmMono } from "@/lib/fonts";
+import { dmSans, fraunces, newsreader } from "@/lib/fonts";
 
 export default function AuthLayout({
   children,
@@ -6,7 +6,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`${archivo.variable} ${dmMono.variable} font-[family-name:var(--font-archivo)]`}>
+    <div className={`${dmSans.variable} ${fraunces.variable} ${newsreader.variable} font-[family-name:var(--font-dm-sans)]`}>
       {children}
     </div>
   );

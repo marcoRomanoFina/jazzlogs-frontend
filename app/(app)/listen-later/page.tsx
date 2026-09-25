@@ -9,7 +9,7 @@ export default function ListenLaterPage() {
     <>
       <Navbar />
 
-      <div className="border-t border-[#d99b10] py-3 font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.14em] text-[rgba(233,230,223,.6)]">
+      <div className="border-t border-[#F6D013] py-3 font-[family-name:var(--font-dm-sans)] text-[10.5px] font-medium uppercase tracking-[.14em] text-[rgba(232,220,192,.6)]">
         <Link href="/logs" className="no-underline">
           Your logs
         </Link>{" "}
@@ -17,20 +17,20 @@ export default function ListenLaterPage() {
       </div>
 
       <div className="pt-11 pb-2.5">
-        <div className="text-[56px] leading-[.9] font-extrabold tracking-[-.05em] text-[#d99b10] sm:text-[80px]">
+        <div className="font-[family-name:var(--font-fraunces)] text-[56px] leading-[.9] font-extrabold tracking-[-.05em] text-[#F6D013] sm:text-[80px]">
           Listen later.
         </div>
-        <div className="mt-5 max-w-[600px] text-[19px] leading-[1.5] text-[rgba(233,230,223,.72)]">
+        <div className="mt-5 max-w-[600px] font-[family-name:var(--font-newsreader)] text-[19px] leading-[1.5] text-[rgba(232,220,192,.72)]">
           Everything you&rsquo;ve set aside to hear when there&rsquo;s time — the records worth a
           full sitting and the single cuts you didn&rsquo;t want to lose.
         </div>
       </div>
 
-      <div className="mt-9 flex items-baseline gap-3.5 border-t-2 border-[#d99b10] pt-5">
-        <span className="text-[30px] font-extrabold tracking-[-.03em] text-[#d99b10]">
+      <div className="mt-9 flex items-baseline gap-3.5 border-t-2 border-[#F6D013] pt-5">
+        <span className="font-[family-name:var(--font-fraunces)] text-[30px] font-extrabold tracking-[-.03em] text-[#F6D013]">
           Playlists
         </span>
-        <span className="font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.14em] text-[rgba(233,230,223,.55)]">
+        <span className="font-[family-name:var(--font-dm-sans)] text-[10.5px] font-medium uppercase tracking-[.14em] text-[rgba(232,220,192,.55)]">
           {MOCK_PLAYLISTS.slice(0, 3).length} to hear
         </span>
       </div>
@@ -41,10 +41,10 @@ export default function ListenLaterPage() {
               <ImagePlaceholder label="Playlist cover" />
             </div>
             <div className="pt-3.5">
-              <div className="text-[24px] leading-[1.02] font-extrabold tracking-[-.03em]">
+              <div className="font-[family-name:var(--font-fraunces)] text-[24px] leading-[1.02] font-extrabold tracking-[-.03em]">
                 {p.title}
               </div>
-              <div className="mt-2 text-[13px] font-semibold text-[rgba(233,230,223,.62)]">
+              <div className="mt-2 text-[13px] font-semibold text-[rgba(232,220,192,.62)]">
                 {p.note}
               </div>
             </div>
@@ -52,28 +52,28 @@ export default function ListenLaterPage() {
         ))}
       </div>
 
-      <div className="mt-14 flex items-baseline gap-3.5 border-t-2 border-[#d99b10] pt-5">
-        <span className="text-[30px] font-extrabold tracking-[-.03em] text-[#d99b10]">
+      <div className="mt-14 flex items-baseline gap-3.5 border-t-2 border-[#F6D013] pt-5">
+        <span className="font-[family-name:var(--font-fraunces)] text-[30px] font-extrabold tracking-[-.03em] text-[#F6D013]">
           Albums
         </span>
-        <span className="font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.14em] text-[rgba(233,230,223,.55)]">
+        <span className="font-[family-name:var(--font-dm-sans)] text-[10.5px] font-medium uppercase tracking-[.14em] text-[rgba(232,220,192,.55)]">
           {MOCK_ALBUMS.length} to hear
         </span>
       </div>
       <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
         {MOCK_ALBUMS.slice(0, 6).map((a) => (
-          <Link key={a.id} href="/editorial/album" className="block no-underline">
+          <Link key={a.id} href="/editorial/track" className="block no-underline">
             <div className="aspect-square overflow-hidden rounded-2xl">
               <ImagePlaceholder label="Album cover" />
             </div>
             <div className="pt-3.5">
               <div className="flex items-baseline justify-between gap-3">
-                <div className="text-[24px] font-extrabold tracking-[-.03em]">{a.title}</div>
-                <span className="flex-none font-[family-name:var(--font-dm-mono)] text-[10px] text-[rgba(233,230,223,.5)]">
+                <div className="font-[family-name:var(--font-fraunces)] text-[24px] font-extrabold tracking-[-.03em]">{a.title}</div>
+                <span className="flex-none font-[family-name:var(--font-dm-sans)] text-[10px] text-[rgba(232,220,192,.5)]">
                   {a.year}
                 </span>
               </div>
-              <div className="mt-2 text-[13px] font-semibold text-[rgba(233,230,223,.62)]">
+              <div className="mt-2 text-[13px] font-semibold text-[rgba(232,220,192,.62)]">
                 {a.artist}
               </div>
             </div>
@@ -81,39 +81,39 @@ export default function ListenLaterPage() {
         ))}
       </div>
 
-      <div className="mt-14 flex items-baseline gap-3.5 border-t-2 border-[#d99b10] pt-5">
-        <span className="text-[30px] font-extrabold tracking-[-.03em] text-[#d99b10]">
+      <div className="mt-14 flex items-baseline gap-3.5 border-t-2 border-[#F6D013] pt-5">
+        <span className="font-[family-name:var(--font-fraunces)] text-[30px] font-extrabold tracking-[-.03em] text-[#F6D013]">
           Tracks
         </span>
-        <span className="font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.14em] text-[rgba(233,230,223,.55)]">
+        <span className="font-[family-name:var(--font-dm-sans)] text-[10.5px] font-medium uppercase tracking-[.14em] text-[rgba(232,220,192,.55)]">
           {MOCK_TRACKS.length} to hear
         </span>
       </div>
       {MOCK_TRACKS.map((t, i) => (
         <div
           key={t.id}
-          className="grid grid-cols-[36px_44px_1fr_auto] items-center gap-5 border-t border-[rgba(233,230,223,.2)] py-3.5 sm:grid-cols-[44px_52px_1fr_180px_auto]"
+          className="grid grid-cols-[36px_44px_1fr_auto] items-center gap-5 border-t border-[rgba(232,220,192,.2)] py-3.5 sm:grid-cols-[44px_52px_1fr_180px_auto]"
         >
-          <span className="text-[20px] font-extrabold tracking-[-.02em] text-[rgba(233,230,223,.4)]">
+          <span className="text-[20px] font-extrabold tracking-[-.02em] text-[rgba(232,220,192,.4)]">
             {String(i + 1).padStart(2, "0")}
           </span>
-          <span className="h-[44px] w-[44px] overflow-hidden rounded-md border-[1.5px] border-[#d99b10] sm:h-[52px] sm:w-[52px]">
+          <span className="h-[44px] w-[44px] overflow-hidden rounded-md border-[1.5px] border-[#F6D013] sm:h-[52px] sm:w-[52px]">
             <ImagePlaceholder label="♪" />
           </span>
           <div className="min-w-0">
             <div className="truncate text-[16px] font-bold tracking-[-.01em] sm:text-[18px]">
               {t.title}
             </div>
-            <div className="mt-1 text-[12px] font-semibold text-[rgba(233,230,223,.6)]">
+            <div className="mt-1 text-[12px] font-semibold text-[rgba(232,220,192,.6)]">
               {t.artist} · {t.duration}
             </div>
           </div>
           <Link
-            href="/editorial/album"
-            className="hidden truncate text-[13px] font-medium text-[rgba(233,230,223,.72)] no-underline sm:block"
+            href="/editorial/track"
+            className="hidden truncate text-[13px] font-medium text-[rgba(232,220,192,.72)] no-underline sm:block"
           >
             {t.album}{" "}
-            <span className="font-[family-name:var(--font-dm-mono)] text-[10px] text-[rgba(233,230,223,.45)]">
+            <span className="font-[family-name:var(--font-dm-sans)] text-[10px] text-[rgba(232,220,192,.45)]">
               · {t.year}
             </span>
           </Link>

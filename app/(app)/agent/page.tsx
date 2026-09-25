@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import MarkdownMessage from "@/components/app/MarkdownMessage";
 import {
   useFullBleedContent,
@@ -37,14 +36,6 @@ const SUGGESTIONS = [
   "Explain modal jazz simply",
 ];
 
-// ALBUM/ARTIST ids link straight to their editorial; TRACK winners come
-// back without an albumId (see lib/chat.ts's Winner), so there's no route
-// to build for those yet — they render as plain (unlinked) chips instead.
-function winnerHref(w: Winner): string | null {
-  if (w.type === "ALBUM") return `/editorial/album?id=${w.id}`;
-  if (w.type === "ARTIST") return `/editorial/artist?id=${w.id}`;
-  return null;
-}
 
 export default function AgentPage() {
   // This page owns a full-height, ChatGPT-style layout with its own
@@ -208,13 +199,13 @@ export default function AgentPage() {
   useSidebarConversations(conversationsData);
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#1c1b18] text-[#e9e6df]">
+    <div className="flex h-full min-h-0 flex-col bg-[#1C1A14] text-[#E8DCC0]">
       {isEmpty ? (
         <div className="flex flex-1 flex-col items-center justify-center p-10 text-center">
-          <div className="text-[56px] leading-[.9] font-extrabold tracking-[-.05em] text-[#d99b10] sm:text-[72px]">
+          <div className="text-[56px] leading-[.9] font-extrabold tracking-[-.05em] text-[#F6D013] sm:text-[72px]">
             jazzlogs agent
           </div>
-          <div className="mt-5 text-[19px] text-[rgba(233,230,223,.7)]">
+          <div className="mt-5 text-[19px] text-[rgba(232,220,192,.7)]">
             Good evening, Miles — what do you want to hear tonight?
           </div>
           <div className="mt-8 grid w-full max-w-[560px] grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -223,7 +214,7 @@ export default function AgentPage() {
                 key={s}
                 type="button"
                 onClick={() => send(s)}
-                className="rounded-xl border-[1.5px] border-[rgba(233,230,223,.28)] px-4 py-3.5 text-left text-[14px] font-medium"
+                className="rounded-xl border-[1.5px] border-[rgba(232,220,192,.28)] px-4 py-3.5 text-left text-[14px] font-medium"
               >
                 {s}
               </button>
@@ -231,7 +222,7 @@ export default function AgentPage() {
           </div>
         </div>
       ) : loadingHistory ? (
-        <div className="flex flex-1 items-center justify-center text-[15px] text-[rgba(233,230,223,.55)]">
+        <div className="flex flex-1 items-center justify-center text-[15px] text-[rgba(232,220,192,.55)]">
           Loading conversation…
         </div>
       ) : (
@@ -241,42 +232,36 @@ export default function AgentPage() {
               m.role === "user" ? (
                 <div
                   key={i}
-                  className="max-w-[80%] self-end rounded-[20px] bg-[rgba(233,230,223,.08)] px-4.5 py-3.5 text-[15px] font-medium"
+                  className="max-w-[80%] self-end rounded-[20px] bg-[rgba(232,220,192,.08)] px-4.5 py-3.5 text-[15px] font-medium"
                 >
                   {m.text}
                 </div>
               ) : (
                 <div key={i} className="flex min-w-0 flex-col">
-                  <div className="mb-3 text-[12px] font-bold tracking-[-.01em] text-[#d99b10]">
+                  <div className="mb-3 text-[12px] font-bold tracking-[-.01em] text-[#F6D013]">
                     jazzlogs agent
                   </div>
                   <MarkdownMessage text={m.text} />
-                  {m.winners && m.winners.length > 0 && (
+                  {/* Post track-only-pivot, the agent only ever recommends
+                      tracks — an ALBUM/ARTIST winner can still show up on an
+                      old chat from before the pivot, but doesn't get a chip
+                      anymore; the answer text itself is unaffected, just no
+                      card for that winner. TRACK winners come back without
+                      an albumId (see lib/chat.ts's Winner), so there's no
+                      route to build for those yet — they render as a plain
+                      (unlinked) chip. */}
+                  {m.winners && m.winners.some((w) => w.type === "TRACK") && (
                     <div className="mt-3.5 flex flex-wrap gap-1.5">
-                      {m.winners.map((w) => {
-                        const href = winnerHref(w);
-                        const label = w.primaryArtist
-                          ? `${w.name} · ${w.primaryArtist}`
-                          : w.name;
-                        const chipClass =
-                          "rounded-[5px] border border-[rgba(233,230,223,.3)] px-2 py-1.5 font-[family-name:var(--font-dm-mono)] text-[10px] text-[rgba(233,230,223,.55)]";
-                        return href ? (
-                          <Link
+                      {m.winners
+                        .filter((w) => w.type === "TRACK")
+                        .map((w) => (
+                          <span
                             key={`${w.type}-${w.id}`}
-                            href={href}
-                            className={
-                              chipClass +
-                              " no-underline transition-colors hover:border-[#d99b10] hover:text-[#e9e6df]"
-                            }
+                            className="rounded-[5px] border border-[rgba(232,220,192,.3)] px-2 py-1.5 font-[family-name:var(--font-dm-sans)] text-[10px] text-[rgba(232,220,192,.55)]"
                           >
-                            {label}
-                          </Link>
-                        ) : (
-                          <span key={`${w.type}-${w.id}`} className={chipClass}>
-                            {label}
+                            {w.primaryArtist ? `${w.name} · ${w.primaryArtist}` : w.name}
                           </span>
-                        );
-                      })}
+                        ))}
                     </div>
                   )}
                 </div>
@@ -284,10 +269,10 @@ export default function AgentPage() {
             )}
             {sending && (
               <div className="flex flex-col">
-                <div className="mb-3 text-[12px] font-bold text-[#d99b10]">
+                <div className="mb-3 text-[12px] font-bold text-[#F6D013]">
                   jazzlogs agent
                 </div>
-                <div className="font-[family-name:var(--font-dm-mono)] text-[13px] text-[rgba(233,230,223,.5)]">
+                <div className="font-[family-name:var(--font-dm-sans)] text-[13px] text-[rgba(232,220,192,.5)]">
                   {currentToolLabel ?? "· · ·"}
                 </div>
               </div>
@@ -299,7 +284,7 @@ export default function AgentPage() {
       {/* Input */}
       <div className="px-10 pt-3 pb-6">
         <div className="mx-auto max-w-[720px]">
-          <div className="flex items-center gap-2.5 rounded-[26px] border-[1.5px] border-[#d99b10] bg-[#d99b10] p-2 pl-5">
+          <div className="flex items-center gap-2.5 rounded-[26px] border-[1.5px] border-[#F6D013] bg-[#F6D013] p-2 pl-5">
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -311,13 +296,13 @@ export default function AgentPage() {
               }}
               placeholder="Ask about any record, artist or era…"
               disabled={sending || loadingHistory}
-              className="flex-1 border-none bg-transparent py-2.5 text-[15px] font-medium text-[#1c1b18] outline-none placeholder:text-[rgba(28,27,24,.5)] disabled:opacity-60"
+              className="flex-1 border-none bg-transparent py-2.5 text-[15px] font-medium text-[#1C1A14] outline-none placeholder:text-[rgba(28,26,20,.5)] disabled:opacity-60"
             />
             <button
               type="button"
               onClick={() => send()}
               disabled={!draft.trim() || sending || loadingHistory}
-              className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-[#1c1b18] text-[17px] font-bold text-[#e9e6df] disabled:bg-[rgba(28,27,24,.12)] disabled:text-[#1c1b1866]"
+              className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-[#1C1A14] text-[17px] font-bold text-[#E8DCC0] disabled:bg-[rgba(28,26,20,.12)] disabled:text-[#1C1A1466]"
             >
               ↑
             </button>

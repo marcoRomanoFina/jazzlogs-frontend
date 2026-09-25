@@ -1,37 +1,6 @@
 import { apiFetch } from "@/lib/api";
 import type { TrackNote } from "@/lib/notes";
-import type { PersonnelRole } from "@/lib/constants/album";
-
-export interface SpotlightTrack {
-  id: string;
-  trackNumber: number | null;
-  name: string;
-  editorialTitle: string;
-  editorialDek: string | null;
-  editorialLikeCount: number;
-  editorialLikedByCurrentUser: boolean;
-}
-
-export interface AlbumSpotlight {
-  id: string;
-  artistName: string;
-  name: string;
-  imageUrl: string | null;
-  releaseYear: number | null;
-  postedAt: string | null;
-  editorialTitle: string | null;
-  editorialDek: string | null;
-  editorialByline: string | null;
-  editorialLikeCount: number;
-  editorialLikedByCurrentUser: boolean;
-  tracks: SpotlightTrack[];
-}
-
-// Lean teaser, not the full album detail — see AlbumService.getAlbumSpotlight
-// on the backend for why this is a separate endpoint.
-export async function fetchAlbumSpotlight(id: string): Promise<AlbumSpotlight> {
-  return apiFetch<AlbumSpotlight>(`/albums/${id}/spotlight`);
-}
+import type { EditorialVoice } from "@/lib/editorials";
 
 export type EditorialBlockType = "LEAD" | "PARA" | "QUOTE";
 
@@ -43,21 +12,27 @@ export interface EditorialBlock {
   contentCategory: string;
 }
 
-export interface AlbumEditorial {
-  id: string;
-  title: string;
-  dek: string | null;
-  byline: string | null;
-  blocks: EditorialBlock[];
-  likeCount: number;
-  likedByCurrentUser: boolean;
-}
-
 export interface TrackEditorial {
   title: string;
   dek: string | null;
-  byline: string | null;
+  byline: EditorialVoice;
+  // Required on create (POST /tracks/{id}/editorial) — the log number
+  // JazzLogs identifies this entry by, e.g. "042".
+  logNumber: string;
+  // Five independent image slots (uploadTrackEditorialCoverImage/
+  // PrincipalImage/SecondaryImage/BannerImage/FooterImage below) — each
+  // null until an admin uploads one, re-uploading replaces it in place.
+  coverImageUrl: string | null;
+  principalImageUrl: string | null;
+  secondaryImageUrl: string | null;
+  bannerImageUrl: string | null;
+  footerImageUrl: string | null;
   blocks: EditorialBlock[];
+  likeCount: number;
+  likedByCurrentUser: boolean;
+  // Missing on editorials that predate this field, not just null — treat
+  // it as fully optional rather than trusting it's always there.
+  createdAt?: string;
 }
 
 export interface VocabularyTag {
@@ -73,13 +48,6 @@ export interface TrackPerformer {
   primaryCredit: boolean;
 }
 
-export interface AlbumPersonnelEntry {
-  artistId: string;
-  artistName: string;
-  role: string;
-  instruments: string[];
-}
-
 export interface AlbumTrack {
   id: string;
   trackNumber: number | null;
@@ -88,7 +56,6 @@ export interface AlbumTrack {
   durationMs: number | null;
   spotifyUrl: string | null;
   imageUrl: string | null;
-  standout: boolean;
   vocalProfile: string | null;
   energy: string | null;
   accessibility: string | null;
@@ -109,11 +76,36 @@ export interface AlbumTrack {
   isSaved: boolean;
 }
 
-// GET /albums/{id} — deliberately light: everything about the album EXCEPT
-// its tracks (see AlbumTrack/fetchAlbumTracks below, a separate call). The
-// tracks list is the expensive part (several Neo4j round-trips per track,
-// plus notes/ratings) — splitting it out lets the page render this header
-// immediately, above the fold, without waiting on that.
+// POST /tracks — track-first ingest (the track-only pivot). No albumId
+// anymore: the backend resolves or creates the Album and Artist itself from
+// the track's own Spotify data (spotifyAlbumId/spotifyArtistId). If either
+// already exists, it's reused as-is — never overwritten with whatever
+// Spotify returns on this particular load.
+export interface CreateTrackRequest {
+  spotifyTrackId: string;
+  vocalProfile?: string;
+  energy?: string;
+  accessibility?: string;
+  moodIntensity?: string;
+  tempoFeel?: string;
+  compositionType?: string;
+}
+
+export async function createTrack(input: CreateTrackRequest): Promise<{ id: string }> {
+  return apiFetch<{ id: string }>("/tracks", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+// GET /albums/{id} — post track-only-pivot, deliberately minimal: metadata
+// derived from Spotify, no manual curation left at all (no cover/letter
+// color, no reviews, no personnel, no editorial of its own — see
+// AlbumTrack.editorial below for the track-level editorial instead).
+// totalTracks changed meaning here too — it's no longer "how many tracks
+// Spotify says this album has," it's "how many tracks JazzLogs has
+// catalogued for it" (load order). loggedTrackCount is new: how many of
+// those have a written editorial.
 export interface AlbumHeader {
   id: string;
   artistId: string;
@@ -124,34 +116,7 @@ export interface AlbumHeader {
   imageUrl: string | null;
   releaseYear: number | null;
   totalTracks: number | null;
-  logNumber: string;
-  label: string;
-  vocalProfile: string | null;
-  energy: string | null;
-  moodIntensity: string | null;
-  accessibility: string | null;
-  postedAt: string | null;
-  instagramPermalink: string | null;
-  editorial: AlbumEditorial | null;
-  // Admin-curated, hex ("#a86b32") — null until an admin sets one for this
-  // album (setAlbumCoverColor/clearAlbumCoverColor below), in which case the
-  // frontend falls back to sampling the cover art itself.
-  coverColor: string | null;
-  // Just the label now, not {code, label} — unlike the per-track tag
-  // fields below (moods/contexts/rhythms/featuredInstruments on
-  // AlbumTrack), which are unchanged.
-  styles: string[];
-  moods: string[];
-  contexts: string[];
-  personnel: AlbumPersonnelEntry[];
-  avgRating: number | null;
-  reviewCount: number;
-  // Derived, live, from listenedTrackCount === totalTracks — not something
-  // the user sets directly. There is no POST/DELETE /albums/{id}/listen.
-  hasListened: boolean;
-  listenedTrackCount: number;
-  listenCount: number;
-  isSaved: boolean;
+  loggedTrackCount: number;
 }
 
 export async function fetchAlbumHeader(id: string): Promise<AlbumHeader> {
@@ -164,58 +129,29 @@ export async function fetchAlbumTracks(id: string): Promise<AlbumTrack[]> {
   return apiFetch<AlbumTrack[]>(`/albums/${id}/tracks`);
 }
 
-// Admin only. 400 if coverColor isn't exactly #rrggbb.
-export async function setAlbumCoverColor(
-  id: string,
-  coverColor: string,
-): Promise<void> {
-  await apiFetch(`/albums/${id}/cover-color`, {
-    method: "PUT",
-    body: JSON.stringify({ coverColor }),
-  });
+// GET /tracks/{id} — a single track's own detail endpoint, independent of
+// its album's batched list. Artist and album come back flat (same idea as
+// AlbumSummaryDto) so a track detail page doesn't need to hit two more
+// endpoints to render its byline — `track` itself is the exact same shape
+// as an entry in fetchAlbumTracks (tags, performers, the current user's own
+// rating/listen/save, full editorial). GET /albums/{id}/tracks is still the
+// batched route for an album's whole tracklist; this is only for one track
+// on its own.
+export interface TrackDetail {
+  artistId: string;
+  artistName: string;
+  artistImageUrl: string | null;
+  artistSpotifyUrl: string | null;
+  albumId: string;
+  albumName: string;
+  albumImageUrl: string | null;
+  albumSpotifyUrl: string | null;
+  albumReleaseYear: number | null;
+  track: AlbumTrack;
 }
 
-// Admin only. Back to null — the frontend falls back to sampling the cover
-// art itself once this album no longer has a curated color.
-export async function clearAlbumCoverColor(id: string): Promise<void> {
-  await apiFetch(`/albums/${id}/cover-color`, { method: "DELETE" });
-}
-
-// Admin only. Marks this album as a good entry point into artistId's
-// catalogue (see GET /artists/{id}/essential-listening) — a collaboration
-// or a sideman credit can be curated as an entry point too, so this isn't
-// necessarily the album's own primary artist.
-export async function setAlbumEntryPoint(
-  albumId: string,
-  artistId: string,
-): Promise<void> {
-  await apiFetch(`/albums/${albumId}/entry-point/${artistId}`, {
-    method: "POST",
-  });
-}
-
-// Admin only. Idempotent — a no-op if it wasn't marked.
-export async function clearAlbumEntryPoint(
-  albumId: string,
-  artistId: string,
-): Promise<void> {
-  await apiFetch(`/albums/${albumId}/entry-point/${artistId}`, {
-    method: "DELETE",
-  });
-}
-
-// Admin only. Idempotent — a no-op if that relation didn't exist. role is
-// required: an artist can have both a LEADER and a SIDEMAN edge to the same
-// album, so this says which one to drop.
-export async function removeAlbumPersonnel(
-  albumId: string,
-  artistId: string,
-  role: PersonnelRole,
-): Promise<void> {
-  await apiFetch(
-    `/albums/${albumId}/personnel/${artistId}?role=${role}`,
-    { method: "DELETE" },
-  );
+export async function fetchTrackDetail(id: string): Promise<TrackDetail> {
+  return apiFetch<TrackDetail>(`/tracks/${id}`);
 }
 
 export async function markTrackListened(id: string): Promise<void> {
@@ -233,48 +169,103 @@ export async function rateTrack(id: string, rating: number): Promise<void> {
   });
 }
 
-// Admin only. Same idea as setAlbumEntryPoint/clearAlbumEntryPoint above,
-// for a track rather than a whole album.
-export async function setTrackEntryPoint(
-  trackId: string,
-  artistId: string,
+// Admin only, multipart/form-data. Five independent image slots on the
+// track editorial — each 404s if the track doesn't have an editorial yet
+// (POST /tracks/{id}/editorial first). 204 No Content — re-fetch the track
+// (via fetchAlbumTracks) to see the new URL on the matching editorial field.
+export async function uploadTrackEditorialCoverImage(
+  id: string,
+  file: File,
 ): Promise<void> {
-  await apiFetch(`/tracks/${trackId}/entry-point/${artistId}`, {
-    method: "POST",
+  const formData = new FormData();
+  formData.append("file", file);
+  await apiFetch(`/tracks/${id}/editorial/cover-image`, {
+    method: "PUT",
+    body: formData,
   });
 }
 
-// Admin only. Idempotent — a no-op if it wasn't marked.
-export async function clearTrackEntryPoint(
-  trackId: string,
-  artistId: string,
+export async function uploadTrackEditorialPrincipalImage(
+  id: string,
+  file: File,
 ): Promise<void> {
-  await apiFetch(`/tracks/${trackId}/entry-point/${artistId}`, {
-    method: "DELETE",
+  const formData = new FormData();
+  formData.append("file", file);
+  await apiFetch(`/tracks/${id}/editorial/principal-image`, {
+    method: "PUT",
+    body: formData,
+  });
+}
+
+export async function uploadTrackEditorialSecondaryImage(
+  id: string,
+  file: File,
+): Promise<void> {
+  const formData = new FormData();
+  formData.append("file", file);
+  await apiFetch(`/tracks/${id}/editorial/secondary-image`, {
+    method: "PUT",
+    body: formData,
+  });
+}
+
+export async function uploadTrackEditorialBannerImage(
+  id: string,
+  file: File,
+): Promise<void> {
+  const formData = new FormData();
+  formData.append("file", file);
+  await apiFetch(`/tracks/${id}/editorial/banner-image`, {
+    method: "PUT",
+    body: formData,
+  });
+}
+
+export async function uploadTrackEditorialFooterImage(
+  id: string,
+  file: File,
+): Promise<void> {
+  const formData = new FormData();
+  formData.append("file", file);
+  await apiFetch(`/tracks/${id}/editorial/footer-image`, {
+    method: "PUT",
+    body: formData,
   });
 }
 
 // GET /tracks/featured's own shape — the archive's "Featured Tracks" strip,
 // admin-curated (up to 6 at a time, see setTrackFeatured/unsetTrackFeatured
-// below). logNumber always comes from the track's album, so unlike
-// CatalogueEditorial/RecentAlbumEditorial it's never null here.
+// below). `id` is the editorial's own id, NOT the track's — use trackId to
+// link to GET /tracks/{trackId} (there's no album page to link to anymore,
+// hence no albumId here either).
 export interface FeaturedTrack {
   id: string;
   title: string;
   dek: string;
-  byline: string;
-  logNumber: string | null;
+  byline: EditorialVoice;
+  trackId: string;
   trackName: string;
-  imageUrl: string | null;
+  // Editorial cover image, not Spotify's track/album artwork.
+  coverImageUrl: string | null;
   albumName: string;
-  albumId: string;
+  artistName: string;
   createdAt: string;
   likeCount: number;
   likedByCurrentUser: boolean;
 }
 
-export function fetchFeaturedTracks(): Promise<FeaturedTrack[]> {
-  return apiFetch<FeaturedTrack[]>("/tracks/featured");
+type FeaturedTrackResponse = FeaturedTrack & {
+  // Kept only while deployed API instances finish moving to coverImageUrl.
+  imageUrl?: string | null;
+  cover_image_url?: string | null;
+};
+
+export async function fetchFeaturedTracks(): Promise<FeaturedTrack[]> {
+  const tracks = await apiFetch<FeaturedTrackResponse[]>("/tracks/featured");
+  return tracks.map(({ imageUrl, cover_image_url, ...track }) => ({
+    ...track,
+    coverImageUrl: track.coverImageUrl ?? imageUrl ?? cover_image_url ?? null,
+  }));
 }
 
 // Admin only. 409 if there are already 6 featured tracks, or if this track

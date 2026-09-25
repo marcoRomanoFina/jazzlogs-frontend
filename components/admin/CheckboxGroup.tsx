@@ -24,13 +24,13 @@ export default function CheckboxGroup({
         return (
           <label
             key={option.code}
-            className="flex cursor-pointer items-center gap-2 text-[13px] text-[rgba(233,230,223,.85)]"
+            className="flex cursor-pointer items-center gap-2 text-[13px] text-[rgba(232,220,192,.85)]"
           >
             <input
               type="checkbox"
               checked={checked}
               onChange={() => toggle(option.code)}
-              className="h-4 w-4 rounded border-[rgba(233,230,223,.4)] bg-transparent accent-[#d99b10]"
+              className="h-4 w-4 rounded border-[rgba(232,220,192,.4)] bg-transparent accent-[#F6D013]"
             />
             {option.label}
           </label>

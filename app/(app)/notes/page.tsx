@@ -40,32 +40,32 @@ export default function NotesPage() {
       <div className="pt-10">
         <Link
           href="/logs"
-          className="inline-flex items-center gap-2 text-[12px] font-semibold text-[rgba(233,230,223,.6)] no-underline"
+          className="inline-flex items-center gap-2 text-[12px] font-semibold text-[rgba(232,220,192,.6)] no-underline"
         >
           ← Back to logs
         </Link>
         <div className="mt-5 grid grid-cols-1 items-end gap-10 md:grid-cols-[1fr_auto]">
           <div>
-            <div className="text-[52px] leading-[.9] font-extrabold tracking-[-.05em] text-[#d99b10] sm:text-[76px]">
+            <div className="font-[family-name:var(--font-fraunces)] text-[52px] leading-[.9] font-extrabold tracking-[-.05em] text-[#F6D013] sm:text-[76px]">
               Notes.
             </div>
-            <p className="mt-5 max-w-[600px] text-[18px] leading-[1.5] text-[rgba(233,230,223,.72)]">
+            <p className="mt-5 max-w-[600px] font-[family-name:var(--font-newsreader)] text-[18px] leading-[1.5] text-[rgba(232,220,192,.72)]">
               The exact moments worth remembering — timestamps you flagged mid-listen, each
               pinned to the track it came from.
             </p>
           </div>
           <div className="text-right">
-            <div className="text-[48px] font-extrabold tracking-[-.04em] text-[#d99b10]">
+            <div className="text-[48px] font-extrabold tracking-[-.04em] text-[#F6D013]">
               {ALL.length}
             </div>
-            <div className="mt-2 font-[family-name:var(--font-dm-mono)] text-[10px] font-medium uppercase tracking-[.14em] text-[rgba(233,230,223,.6)]">
+            <div className="mt-2 font-[family-name:var(--font-dm-sans)] text-[10px] font-medium uppercase tracking-[.14em] text-[rgba(232,220,192,.6)]">
               notes flagged
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-2.5 border-t-2 border-[#d99b10] pt-5">
+      <div className="mt-8 flex flex-wrap gap-2.5 border-t-2 border-[#F6D013] pt-5">
         {FILTERS.map((f) => (
           <button
             key={f}
@@ -76,7 +76,7 @@ export default function NotesPage() {
             }}
             className={
               "rounded-full px-4.5 py-2.5 text-[12px] font-bold " +
-              (filter === f ? "bg-[#d99b10] text-[#1c1b18]" : "bg-[rgba(233,230,223,.08)] text-[rgba(233,230,223,.72)]")
+              (filter === f ? "bg-[#F6D013] text-[#1C1A14]" : "bg-[rgba(232,220,192,.08)] text-[rgba(232,220,192,.72)]")
             }
           >
             {f}

@@ -1,15 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-
-// How long to wait after the last click before actually telling the caller
-// to persist it — rapid double/triple clicks (like → unlike → like) would
-// otherwise fire one network request per click with no ordering guarantee,
-// so whichever response lands last "wins" server-side regardless of which
-// click the user meant to be final. Collapsing them into a single trailing
-// call removes the race entirely; the button itself still flips instantly
-// on every click, so it never feels laggy.
-const TOGGLE_DEBOUNCE_MS = 400;
+import { useState } from "react";
 
 export default function LikeButton({
   initialCount,
@@ -17,6 +8,9 @@ export default function LikeButton({
   variant = "pill",
   readOnly = false,
   hideCount = false,
+  label = "Like",
+  size,
+  pillSizeClassName = "px-6 py-[15px] text-[14px]",
   theme = "dark",
   likedColor = "#e0392b",
   onToggle,
@@ -27,8 +21,23 @@ export default function LikeButton({
   readOnly?: boolean;
   // For pages that already show the count elsewhere (e.g. next to the
   // rating block) — keeps this button just a plain toggle, not a second,
-  // redundant counter.
+  // redundant counter. Applies to every variant, including inline/readOnly.
   hideCount?: boolean;
+  // The pill variant's unliked-state text — "Liked" once toggled either
+  // way, same as always. Only the pill reads this; inline/readOnly never
+  // show a label, just the heart (+ count).
+  label?: string;
+  // The heart icon's pixel size — defaults to 17 (pill) / 15 (inline and
+  // readOnly) when omitted, same as always. On inline/readOnly it also
+  // sets the count's font-size to match, so the heart and the number read
+  // as the same size; the pill variant's text stays fixed (its size isn't
+  // meant to track the heart the same way).
+  size?: number;
+  // Pill variant only — its padding/font-size classes, swappable wholesale
+  // so a page with its own larger button row (e.g. the track page's
+  // Listened/Listen later pair) can match scale without fighting Tailwind's
+  // class-order-dependent specificity via a partial override.
+  pillSizeClassName?: string;
   // The unliked-state color is tuned for the app's dark background by
   // default (a light, low-opacity gray) — barely readable on a light
   // surface like the note cards, so "light" swaps it for a near-black
@@ -38,9 +47,14 @@ export default function LikeButton({
   // palette (the album editorial's cover-derived tint) can override it so a
   // like reads as "this page's color" instead of a fixed brand red.
   likedColor?: string;
-  // Fired after the local optimistic toggle, with the new liked state — the
-  // caller is responsible for persisting it (and rolling the UI back on
-  // failure), this component only owns the optimistic display state.
+  // Fired immediately after the local optimistic toggle, on every click,
+  // with the new liked state — the caller is responsible for persisting it.
+  // Rapid repeat clicks would otherwise fire one network request per click
+  // with no ordering guarantee, so callers debounce the actual persist call
+  // themselves (see lib/debounce.ts's debounceByKey, used the same way for
+  // saves) while still updating their mirrored count/liked state on every
+  // call so nothing elsewhere on the page lags behind this button's own
+  // instant flip.
   onToggle?: (nextLiked: boolean) => void;
 }) {
   const [liked, setLiked] = useState(initialLiked);
@@ -49,43 +63,24 @@ export default function LikeButton({
     ? initialCount
     : initialCount + (liked ? 1 : 0) - (initialLiked ? 1 : 0);
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Holds the not-yet-fired call, if any — flushed on unmount instead of
-  // just cancelled. Without this, navigating away (or a note card leaving
-  // the DOM on a page/re-fetch) within the debounce window silently drops
-  // the toggle: the backend never hears about it, but nothing ever errors,
-  // so it just looks like "unlike doesn't work" with no trace of why.
-  const pendingRef = useRef<(() => void) | null>(null);
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      pendingRef.current?.();
-    };
-  }, []);
-
   function toggle() {
     const next = !liked;
     setLiked(next);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    pendingRef.current = () => onToggle?.(next);
-    debounceRef.current = setTimeout(() => {
-      debounceRef.current = null;
-      pendingRef.current = null;
-      onToggle?.(next);
-    }, TOGGLE_DEBOUNCE_MS);
+    onToggle?.(next);
   }
   const color = isLiked
     ? likedColor
     : theme === "light"
-      ? "#1c1b18"
+      ? "#1C1A14"
       : variant === "pill"
-        ? "rgba(233,230,223,.7)"
-        : "rgba(233,230,223,.6)";
+        ? "rgba(232,220,192,.7)"
+        : "rgba(232,220,192,.6)";
 
+  const heartSize = size ?? (variant === "pill" ? 17 : 15);
   const heart = (
     <svg
-      width={variant === "pill" ? 17 : 15}
-      height={variant === "pill" ? 17 : 15}
+      width={heartSize}
+      height={heartSize}
       viewBox="0 0 24 24"
       fill={isLiked ? likedColor : "none"}
       stroke={isLiked ? likedColor : "currentColor"}
@@ -104,10 +99,10 @@ export default function LikeButton({
     return (
       <span
         className="flex items-center gap-1.5 text-[14px] font-bold"
-        style={{ color }}
+        style={{ color, fontSize: size }}
       >
         {heart}
-        {count}
+        {!hideCount && count}
       </span>
     );
   }
@@ -118,10 +113,10 @@ export default function LikeButton({
         type="button"
         onClick={toggle}
         className="flex items-center gap-1.5 text-[13px] font-bold"
-        style={{ color }}
+        style={{ color, fontSize: size }}
       >
         {heart}
-        {count}
+        {!hideCount && count}
       </button>
     );
   }
@@ -130,16 +125,16 @@ export default function LikeButton({
     <button
       type="button"
       onClick={toggle}
-      className="flex items-center gap-2 rounded-full px-6 py-[15px] text-[14px] font-bold"
+      className={`flex items-center gap-2 rounded-full font-bold ${pillSizeClassName}`}
       style={{
         color,
         background: liked
           ? `color-mix(in srgb, ${likedColor} 16%, transparent)`
-          : "rgba(233,230,223,.1)",
+          : "rgba(232,220,192,.1)",
       }}
     >
       {heart}
-      {liked ? "Liked" : "Like"}
+      {liked ? "Liked" : label}
       {hideCount ? "" : ` · ${count}`}
     </button>
   );

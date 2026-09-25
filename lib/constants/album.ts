@@ -7,9 +7,6 @@ export type Level = (typeof LEVELS)[number];
 export const EDITORIAL_BLOCK_TYPES = ["LEAD", "PARA", "QUOTE"] as const;
 export type EditorialBlockType = (typeof EDITORIAL_BLOCK_TYPES)[number];
 
-export const PERSONNEL_ROLES = ["LEADER", "SIDEMAN"] as const;
-export type PersonnelRole = (typeof PERSONNEL_ROLES)[number];
-
 export const TEMPO_FEELS = [
   "BALLAD",
   "SLOW",
@@ -29,14 +26,13 @@ export const COMPOSITION_TYPES = [
 export type CompositionType = (typeof COMPOSITION_TYPES)[number];
 
 export const BLOCK_CONTENT_CATEGORIES = [
-  "HISTORICAL_CONTEXT",
+  "HOOK",
+  "CONTEXT",
   "MUSICAL_ANALYSIS",
   "PERSONNEL_HIGHLIGHT",
   "MOOD_AND_ATMOSPHERE",
-  "PERSONAL_TAKE",
-  "ANECDOTE",
   "RECOMMENDATION",
-  "JAZZLOGS_JOURNEY",
+  "QUOTE",
 ] as const;
 export type BlockContentCategory = (typeof BLOCK_CONTENT_CATEGORIES)[number];
 

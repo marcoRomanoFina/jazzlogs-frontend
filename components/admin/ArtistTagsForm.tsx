@@ -202,7 +202,7 @@ export default function ArtistTagsForm() {
         />
       </div>
 
-      <div className="flex flex-col gap-4 border-t border-[rgba(233,230,223,.12)] pt-5">
+      <div className="flex flex-col gap-4 border-t border-[rgba(232,220,192,.12)] pt-5">
         <div className="flex items-center gap-3">
           <button
             type="button"

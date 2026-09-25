@@ -1,5 +1,4 @@
-import { apiFetch, ApiError } from "@/lib/api";
-import type { AlbumFormValues } from "@/lib/validations/album";
+import { ApiError } from "@/lib/api";
 
 export type StepStatus = "pending" | "running" | "done" | "error";
 
@@ -84,44 +83,6 @@ async function retrySteps(
   }
 
   return reports;
-}
-
-function buildAlbumPayload(values: AlbumFormValues) {
-  return omitEmpty({
-    artistId: values.artistId,
-    spotifyAlbumId: values.spotifyAlbumId,
-    logNumber: values.logNumber,
-    label: values.label,
-    vocalProfile: values.vocalProfile,
-    energy: values.energy,
-    moodIntensity: values.moodIntensity,
-    accessibility: values.accessibility,
-    instagramPermalink: values.instagramPermalink,
-  });
-}
-
-export async function submitFicha(
-  values: AlbumFormValues,
-  onUpdate: (reports: StepReport[]) => void,
-): Promise<{ albumId: string | null; reports: StepReport[] }> {
-  const reports: StepReport[] = [
-    { key: "album", label: "Guardar ficha", status: "running" },
-  ];
-  onUpdate([...reports]);
-
-  try {
-    const created = await apiFetch<{ id: string }>("/albums", {
-      method: "POST",
-      body: JSON.stringify(buildAlbumPayload(values)),
-    });
-    reports[0] = { ...reports[0], status: "done" };
-    onUpdate([...reports]);
-    return { albumId: created.id, reports };
-  } catch (err) {
-    reports[0] = { ...reports[0], status: "error", error: errorMessage(err) };
-    onUpdate([...reports]);
-    return { albumId: null, reports };
-  }
 }
 
 export async function submitSteps(

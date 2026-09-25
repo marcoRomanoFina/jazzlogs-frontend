@@ -3,45 +3,52 @@ import AdminGate from "@/components/admin/AdminGate";
 
 const TOOLS = [
   {
-    href: "/admin/albums/new",
-    title: "Nuevo álbum",
-    description: "Ficha de un álbum, a partir de su Spotify Album ID.",
+    href: "/admin/playlists/new",
+    title: "Nueva playlist",
+    description:
+      "Crear la ficha de una playlist (metadata) — nace en borrador; el tracklist se carga después, track por track.",
   },
   {
-    href: "/admin/albums/editorial",
-    title: "Editorial de álbum",
+    href: "/admin/playlists/tracks",
+    title: "Agregar track a playlist",
     description:
-      "Cargar la editorial de un álbum existente a partir de su Album ID.",
+      "Agregar un track existente del catálogo al final de una playlist, a partir de su Playlist ID y Track ID.",
   },
   {
-    href: "/admin/albums/tags",
-    title: "Tags de álbum",
+    href: "/admin/playlists/cover",
+    title: "Cover de playlist",
     description:
-      "Cargar styles, moods y contexts de un álbum existente a partir de su Album ID.",
+      "Subir la imagen de portada real de una playlist, a partir de su Playlist ID.",
   },
   {
-    href: "/admin/albums/personnel",
-    title: "Personnel de álbum",
+    href: "/admin/playlists/detail-images",
+    title: "Imágenes de detalle de playlist",
     description:
-      "Cargar el personnel de un álbum existente a partir de su Album ID.",
+      "Subir la imagen principal, banner y/o footer del detalle de una playlist, a partir de su Playlist ID.",
   },
   {
-    href: "/admin/albums/featured",
-    title: "Álbum featured",
+    href: "/admin/playlists/publish",
+    title: "Publicar playlist",
     description:
-      "Marcar la editorial de un álbum existente como la destacada del archive, a partir de su Album ID.",
+      "Publicar una playlist (o volverla a borrador) a partir de su Playlist ID.",
   },
   {
-    href: "/admin/albums/cover-color",
-    title: "Cover color",
+    href: "/admin/playlists/featured",
+    title: "Playlist featured",
     description:
-      "Curar a mano el color de ambiente de la página de un álbum existente, a partir de su Album ID.",
+      "Marcar o sacar la playlist destacada del archive, a partir de su Playlist ID.",
+  },
+  {
+    href: "/admin/playlists/delete",
+    title: "Borrar playlist",
+    description:
+      "Hard delete de una playlist completa (metadata, tracks, likes, listens) a partir de su Playlist ID. No hay vuelta atrás.",
   },
   {
     href: "/admin/tracks/new",
     title: "Nuevo track",
     description:
-      "Cargar tracks en cualquier álbum existente a partir de su Album ID.",
+      "Cargar tracks a partir de su Spotify Track ID — el álbum y el artista se resuelven o se crean solos.",
   },
   {
     href: "/admin/artists/new",
@@ -49,16 +56,16 @@ const TOOLS = [
     description: "Crear un artista a partir de su Spotify Artist ID.",
   },
   {
-    href: "/admin/artists/editorial",
-    title: "Editorial de artista",
-    description:
-      "Cargar la editorial de un artista existente a partir de su Artist ID.",
-  },
-  {
     href: "/admin/tracks/editorial",
     title: "Editorial de track",
     description:
       "Cargar la editorial de un track existente a partir de su Track ID.",
+  },
+  {
+    href: "/admin/tracks/editorial-image",
+    title: "Imágenes de editorial de track",
+    description:
+      "Subir las 5 imágenes de la editorial de un track (cover, principal, secundaria, banner, footer), a partir de su Track ID.",
   },
   {
     href: "/admin/tracks/tags",
@@ -79,22 +86,70 @@ const TOOLS = [
       "Cargar instrumento principal, styles y contexts de un artista existente a partir de su Artist ID.",
   },
   {
-    href: "/admin/albums/entry-point",
-    title: "Entry point",
+    href: "/admin/artists/similar",
+    title: "Similar artists",
     description:
-      "Marcar o sacar un álbum/track como puerta de entrada al catálogo de un artista.",
+      "Agregar o sacar un artista de la lista de similares curada a mano de otro.",
   },
   {
-    href: "/admin/albums/remove-personnel",
-    title: "Sacar personnel",
+    href: "/admin/series/new",
+    title: "Nueva serie",
     description:
-      "Sacar a un artista de la ficha técnica de un álbum, a partir de su Album ID, Artist ID y rol.",
+      "Crear la ficha de una serie (metadata) — nace en borrador; los capítulos se cargan después.",
   },
   {
-    href: "/admin/artists/remove-similar",
-    title: "Sacar similar artist",
+    href: "/admin/series/edit",
+    title: "Editar serie",
     description:
-      "Sacar a un artista de la lista de similares curada a mano de otro artista.",
+      "Reemplazar título, dek y description de una serie existente a partir de su Series ID.",
+  },
+  {
+    href: "/admin/series/cover",
+    title: "Cover de serie",
+    description:
+      "Subir la imagen de portada real de una serie, a partir de su Series ID.",
+  },
+  {
+    href: "/admin/series/detail-images",
+    title: "Imágenes de detalle de serie",
+    description:
+      "Subir la imagen principal, banner y/o footer del detalle de una serie, a partir de su Series ID.",
+  },
+  {
+    href: "/admin/series/publish",
+    title: "Publicar serie",
+    description:
+      "Publicar una serie (o volverla a borrador) a partir de su Series ID.",
+  },
+  {
+    href: "/admin/series/featured",
+    title: "Serie featured",
+    description:
+      "Marcar o sacar la serie destacada del archive, a partir de su Series ID.",
+  },
+  {
+    href: "/admin/series/chapters/new",
+    title: "Nuevo capítulo",
+    description:
+      "Agregar un capítulo al final de una serie, a partir de su Series ID.",
+  },
+  {
+    href: "/admin/series/chapters/edit",
+    title: "Editar capítulo",
+    description:
+      "Reemplazar type, trackId, título, note y audioDurationMs de un capítulo, a partir de su Series ID y Chapter ID.",
+  },
+  {
+    href: "/admin/series/chapters/audio",
+    title: "Audio de capítulo",
+    description:
+      "Subir el audio real de un capítulo, a partir de su Series ID y Chapter ID.",
+  },
+  {
+    href: "/admin/series/chapters/cover",
+    title: "Imágenes de capítulo",
+    description:
+      "Subir la imagen del capítulo y/o la imagen landscape/hero de un capítulo, a partir de su Series ID y Chapter ID.",
   },
 ];
 
@@ -102,10 +157,10 @@ export default function AdminHomePage() {
   return (
     <AdminGate showBackLink={false}>
       <div className="mx-auto max-w-4xl px-6 py-12">
-        <h1 className="text-2xl font-extrabold tracking-[-.02em]">
+        <h1 className="font-[family-name:var(--font-fraunces)] text-2xl font-extrabold tracking-[-.02em]">
           Panel de admin
         </h1>
-        <p className="mt-1 mb-8 text-sm text-[rgba(233,230,223,.6)]">
+        <p className="mt-1 mb-8 text-sm text-[rgba(232,220,192,.6)]">
           Herramientas internas de carga de contenido.
         </p>
 
@@ -114,13 +169,13 @@ export default function AdminHomePage() {
             <Link
               key={tool.href}
               href={tool.href}
-              className="rounded-xl border border-[rgba(233,230,223,.15)] bg-[rgba(233,230,223,.02)] p-5 transition-colors hover:border-[#d99b10] hover:bg-[rgba(233,230,223,.04)]"
+              className="rounded-xl border border-[rgba(232,220,192,.15)] bg-[rgba(232,220,192,.02)] p-5 transition-colors hover:border-[#F6D013] hover:bg-[rgba(232,220,192,.04)]"
             >
-              <div className="font-bold text-[#e9e6df]">{tool.title}</div>
-              <p className="mt-1.5 text-sm text-[rgba(233,230,223,.6)]">
+              <div className="font-bold text-[#E8DCC0]">{tool.title}</div>
+              <p className="mt-1.5 text-sm text-[rgba(232,220,192,.6)]">
                 {tool.description}
               </p>
-              <span className="mt-3 inline-block text-sm font-bold text-[#d99b10]">
+              <span className="mt-3 inline-block text-sm font-bold text-[#F6D013]">
                 Abrir →
               </span>
             </Link>

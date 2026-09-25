@@ -9,6 +9,7 @@ import {
   type TrackTagsFormValues,
 } from "@/lib/validations/trackTags";
 import {
+  STYLE_OPTIONS,
   MOOD_OPTIONS,
   CONTEXT_OPTIONS,
   RHYTHM_OPTIONS,
@@ -34,6 +35,7 @@ import {
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 interface TrackTagsSnapshot {
+  styles: { code: string }[];
   moods: { code: string }[];
   contexts: { code: string }[];
   rhythms: { code: string }[];
@@ -73,6 +75,10 @@ export default function TrackTagsForm() {
     try {
       const track = await apiFetch<TrackTagsSnapshot>(
         `/tracks/${getValues("trackId")}/tags`,
+      );
+      setValue(
+        "styles",
+        track.styles.map((t) => t.code),
       );
       setValue(
         "moods",
@@ -156,6 +162,21 @@ export default function TrackTagsForm() {
       </div>
 
       <div>
+        <span className={fieldLabel}>Styles</span>
+        <Controller
+          control={control}
+          name="styles"
+          render={({ field }) => (
+            <CheckboxGroup
+              options={STYLE_OPTIONS}
+              value={field.value}
+              onChange={field.onChange}
+            />
+          )}
+        />
+      </div>
+
+      <div>
         <span className={fieldLabel}>Moods</span>
         <Controller
           control={control}
@@ -215,7 +236,7 @@ export default function TrackTagsForm() {
         />
       </div>
 
-      <div className="flex flex-col gap-4 border-t border-[rgba(233,230,223,.12)] pt-5">
+      <div className="flex flex-col gap-4 border-t border-[rgba(232,220,192,.12)] pt-5">
         <div className="flex items-center gap-3">
           <button
             type="button"

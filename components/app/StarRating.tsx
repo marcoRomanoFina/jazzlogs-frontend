@@ -15,11 +15,13 @@ function starFill(value: number, index: number): number {
 function StarRow({
   value,
   size,
-  fillColor = "#d99b10",
+  fillColor = "#F6D013",
+  emptyColor = "rgba(232,220,192,.22)",
 }: {
   value: number;
   size: number;
   fillColor?: string;
+  emptyColor?: string;
 }) {
   return (
     <span
@@ -35,7 +37,7 @@ function StarRow({
           <span
             aria-hidden
             className="absolute inset-0"
-            style={{ color: "rgba(233,230,223,.22)" }}
+            style={{ color: emptyColor }}
           >
             ★
           </span>
@@ -56,12 +58,16 @@ export function AverageStars({
   value,
   size = 16,
   fillColor,
+  emptyColor,
 }: {
   value: number;
   size?: number;
   fillColor?: string;
+  emptyColor?: string;
 }) {
-  return <StarRow value={value} size={size} fillColor={fillColor} />;
+  return (
+    <StarRow value={value} size={size} fillColor={fillColor} emptyColor={emptyColor} />
+  );
 }
 
 export function InteractiveStars({
@@ -70,6 +76,7 @@ export function InteractiveStars({
   disabled = false,
   title,
   fillColor,
+  emptyColor,
   onRate,
 }: {
   initial?: number;
@@ -77,6 +84,7 @@ export function InteractiveStars({
   disabled?: boolean;
   title?: string;
   fillColor?: string;
+  emptyColor?: string;
   // Called with the chosen rating (1-5, half steps) — there's no "clear a
   // rating" endpoint, so clicking a star always sets it, never toggles it off.
   onRate?: (rating: number) => void;
@@ -100,7 +108,7 @@ export function InteractiveStars({
       title={title}
       style={{ opacity: disabled ? 0.5 : 1 }}
     >
-      <StarRow value={displayRating} size={size} fillColor={fillColor} />
+      <StarRow value={displayRating} size={size} fillColor={fillColor} emptyColor={emptyColor} />
       {/* Two click targets per star (left half / right half), positioned
           over the row above at the exact same widths/gap — clicking the
           left half of star N picks N-0.5, the right half picks N whole. */}

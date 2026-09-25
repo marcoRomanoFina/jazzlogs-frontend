@@ -7,7 +7,7 @@ import remarkGfm from "remark-gfm";
 // of leaking browser-default styling into the chat.
 export default function MarkdownMessage({ text }: { text: string }) {
   return (
-    <div className="text-[15.5px] leading-[1.7] text-[#e9e6df]">
+    <div className="text-[15.5px] leading-[1.7] text-[#E8DCC0]">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -15,7 +15,7 @@ export default function MarkdownMessage({ text }: { text: string }) {
             <p className="m-0 mt-3 first:mt-0">{children}</p>
           ),
           strong: ({ children }) => (
-            <strong className="font-bold text-[#e9e6df]">{children}</strong>
+            <strong className="font-bold text-[#E8DCC0]">{children}</strong>
           ),
           em: ({ children }) => <em className="italic">{children}</em>,
           a: ({ href, children }) => (
@@ -23,7 +23,7 @@ export default function MarkdownMessage({ text }: { text: string }) {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#d99b10] underline underline-offset-2 transition-colors hover:text-[#e6a614]"
+              className="text-[#F6D013] underline underline-offset-2 transition-colors hover:text-[#e6a614]"
             >
               {children}
             </a>
@@ -40,22 +40,22 @@ export default function MarkdownMessage({ text }: { text: string }) {
           ),
           li: ({ children }) => <li className="pl-1">{children}</li>,
           h1: ({ children }) => (
-            <div className="mt-4 text-[20px] leading-[1.2] font-extrabold tracking-[-.02em] text-[#d99b10] first:mt-0">
+            <div className="mt-4 text-[20px] leading-[1.2] font-extrabold tracking-[-.02em] text-[#F6D013] first:mt-0">
               {children}
             </div>
           ),
           h2: ({ children }) => (
-            <div className="mt-4 text-[17px] leading-[1.2] font-extrabold tracking-[-.02em] text-[#d99b10] first:mt-0">
+            <div className="mt-4 text-[17px] leading-[1.2] font-extrabold tracking-[-.02em] text-[#F6D013] first:mt-0">
               {children}
             </div>
           ),
           h3: ({ children }) => (
-            <div className="mt-3 text-[15px] leading-[1.2] font-bold text-[#d99b10] first:mt-0">
+            <div className="mt-3 text-[15px] leading-[1.2] font-bold text-[#F6D013] first:mt-0">
               {children}
             </div>
           ),
           blockquote: ({ children }) => (
-            <blockquote className="m-0 mt-3 border-l-2 border-[#d99b10] pl-4 italic text-[rgba(233,230,223,.75)] first:mt-0">
+            <blockquote className="m-0 mt-3 border-l-2 border-[#F6D013] pl-4 italic text-[rgba(232,220,192,.75)] first:mt-0">
               {children}
             </blockquote>
           ),
@@ -64,14 +64,14 @@ export default function MarkdownMessage({ text }: { text: string }) {
             return isBlock ? (
               <code
                 className={
-                  "block font-[family-name:var(--font-dm-mono)] text-[13px] " +
+                  "block font-[family-name:var(--font-dm-sans)] text-[13px] " +
                   (className ?? "")
                 }
               >
                 {children}
               </code>
             ) : (
-              <code className="rounded bg-[rgba(233,230,223,.1)] px-1.5 py-0.5 font-[family-name:var(--font-dm-mono)] text-[13px]">
+              <code className="rounded bg-[rgba(232,220,192,.1)] px-1.5 py-0.5 font-[family-name:var(--font-dm-sans)] text-[13px]">
                 {children}
               </code>
             );
@@ -81,7 +81,7 @@ export default function MarkdownMessage({ text }: { text: string }) {
               {children}
             </pre>
           ),
-          hr: () => <hr className="my-4 border-[rgba(233,230,223,.15)]" />,
+          hr: () => <hr className="my-4 border-[rgba(232,220,192,.15)]" />,
           table: ({ children }) => (
             <div className="mt-3 overflow-x-auto first:mt-0">
               <table className="w-full border-collapse text-[14px]">
@@ -90,12 +90,12 @@ export default function MarkdownMessage({ text }: { text: string }) {
             </div>
           ),
           th: ({ children }) => (
-            <th className="border-b border-[rgba(233,230,223,.25)] px-2.5 py-2 text-left font-bold text-[#e9e6df]">
+            <th className="border-b border-[rgba(232,220,192,.25)] px-2.5 py-2 text-left font-bold text-[#E8DCC0]">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="border-b border-[rgba(233,230,223,.1)] px-2.5 py-2 align-top">
+            <td className="border-b border-[rgba(232,220,192,.1)] px-2.5 py-2 align-top">
               {children}
             </td>
           ),

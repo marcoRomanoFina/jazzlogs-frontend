@@ -80,22 +80,22 @@ export default function Sidebar() {
   const width = expanded ? SIDEBAR_EXPANDED_RAIL_WIDTH : SIDEBAR_COLLAPSED_WIDTH;
   // Falls back to the flat amber/charcoal everywhere a page hasn't
   // registered its own cover-derived palette via usePageTint.
-  const accent = pageTint?.accent ?? "#d99b10";
+  const accent = pageTint?.accent ?? "#F6D013";
 
   return (
     <aside
       className={
-        "fixed top-0 left-0 z-40 flex h-screen flex-col overflow-hidden border-r border-[rgba(217,155,16,.18)] py-6 transition-[width,border-radius] duration-300 ease-in-out " +
+        "fixed top-0 left-0 z-40 flex h-screen flex-col overflow-hidden border-r border-[rgba(246,208,19,.18)] py-6 transition-[width,border-radius] duration-300 ease-in-out " +
         (expanded ? "rounded-r-2xl" : "")
       }
-      style={{ width, backgroundColor: pageTint?.background ?? "#1c1b18" }}
+      style={{ width, backgroundColor: pageTint?.background ?? "#1C1A14" }}
     >
       <button
         type="button"
         onClick={toggle}
         aria-label={expanded ? "Collapse menu" : "Expand menu"}
-        className="mx-[13px] flex h-11 w-11 flex-none items-center justify-center rounded-full text-[rgba(233,230,223,.75)]"
-        style={{ background: "rgba(233,230,223,.1)" }}
+        className="mx-[13px] flex h-11 w-11 flex-none items-center justify-center rounded-full text-[rgba(232,220,192,.75)]"
+        style={{ background: "rgba(232,220,192,.1)" }}
       >
         <svg
           width="17"
@@ -129,8 +129,8 @@ export default function Sidebar() {
               className={
                 "flex items-center gap-3 rounded-lg px-2.5 py-2.5 no-underline transition-colors " +
                 (isActive
-                  ? "bg-[rgba(217,155,16,.14)] text-[#e9e6df]"
-                  : "text-[rgba(233,230,223,.6)] hover:text-[#e9e6df]")
+                  ? "bg-[rgba(246,208,19,.14)] text-[#E8DCC0]"
+                  : "text-[rgba(232,220,192,.6)] hover:text-[#E8DCC0]")
               }
             >
               <svg
@@ -166,7 +166,7 @@ export default function Sidebar() {
               <button
                 type="button"
                 onClick={conversations.onNewChat}
-                className="flex flex-none items-center gap-2 rounded-lg border-[1.5px] border-[rgba(233,230,223,.3)] px-2.5 py-2.5 text-[13px] font-semibold text-[rgba(233,230,223,.85)] transition-colors hover:border-[#d99b10] hover:text-[#e9e6df]"
+                className="flex flex-none items-center gap-2 rounded-lg border-[1.5px] border-[rgba(232,220,192,.3)] px-2.5 py-2.5 text-[13px] font-semibold text-[rgba(232,220,192,.85)] transition-colors hover:border-[#F6D013] hover:text-[#E8DCC0]"
               >
                 <span className="text-[15px] leading-none">+</span> New chat
               </button>
@@ -181,8 +181,8 @@ export default function Sidebar() {
                       className={
                         "truncate rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors " +
                         (isActive
-                          ? "bg-[rgba(217,155,16,.14)] text-[#e9e6df]"
-                          : "text-[rgba(233,230,223,.55)] hover:text-[#e9e6df]")
+                          ? "bg-[rgba(246,208,19,.14)] text-[#E8DCC0]"
+                          : "text-[rgba(232,220,192,.55)] hover:text-[#E8DCC0]")
                       }
                     >
                       {c.title}
@@ -196,7 +196,7 @@ export default function Sidebar() {
               type="button"
               onClick={conversations.onNewChat}
               title="New chat"
-              className="flex h-9 w-9 flex-none items-center justify-center rounded-lg border-[1.5px] border-[rgba(233,230,223,.3)] text-[16px] leading-none text-[rgba(233,230,223,.85)] transition-colors hover:border-[#d99b10] hover:text-[#e9e6df]"
+              className="flex h-9 w-9 flex-none items-center justify-center rounded-lg border-[1.5px] border-[rgba(232,220,192,.3)] text-[16px] leading-none text-[rgba(232,220,192,.85)] transition-colors hover:border-[#F6D013] hover:text-[#E8DCC0]"
             >
               +
             </button>
@@ -206,12 +206,12 @@ export default function Sidebar() {
       <Link
         href="/profile"
         title={expanded ? undefined : "Miles D."}
-        className="flex items-center gap-3 px-3 py-2.5 no-underline hover:bg-[rgba(233,230,223,.05)]"
+        className="flex items-center gap-3 px-3 py-2.5 no-underline hover:bg-[rgba(232,220,192,.05)]"
       >
-        <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[#2a2621] text-[12px] font-extrabold tracking-[-.02em] text-[#d99b10]">
+        <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[#2A261C] text-[12px] font-extrabold tracking-[-.02em] text-[#F6D013]">
           MD
         </span>
-        <span className="truncate text-[13px] font-semibold whitespace-nowrap text-[#e9e6df]">
+        <span className="truncate text-[13px] font-semibold whitespace-nowrap text-[#E8DCC0]">
           Miles D.
         </span>
       </Link>

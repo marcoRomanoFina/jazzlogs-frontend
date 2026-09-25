@@ -15,18 +15,28 @@ export class ApiError extends Error {
 /**
  * Calls the Spring Boot backend with the current Supabase access token
  * attached as a Bearer token. Client-side only (reads the browser session).
+ * Factored out of apiFetch below so a future caller that needs the raw
+ * Response (rather than a parsed body) has somewhere to get it without
+ * duplicating the auth/header setup.
+ *
+ * Content-Type is left for the browser to set when the body is FormData
+ * (a multipart upload, e.g. PUT /playlists/{id}/cover) — forcing
+ * application/json there would drop the multipart boundary and break the
+ * request.
  */
-export async function apiFetch<T = unknown>(
+async function rawFetch(
   path: string,
-  options: RequestInit = {}
-): Promise<T> {
+  options: RequestInit = {},
+): Promise<Response> {
   const supabase = createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
   const headers = new Headers(options.headers);
-  headers.set("Content-Type", "application/json");
+  if (!(options.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
   if (session?.access_token) {
     headers.set("Authorization", `Bearer ${session.access_token}`);
   }
@@ -37,6 +47,15 @@ export async function apiFetch<T = unknown>(
     const body = await res.text().catch(() => "");
     throw new ApiError(body || res.statusText, res.status);
   }
+
+  return res;
+}
+
+export async function apiFetch<T = unknown>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const res = await rawFetch(path, options);
 
   // Several endpoints (e.g. POST/DELETE /likes) return 200/201/204 with no
   // body at all — only special-casing 204 meant a 200/201 with an empty body

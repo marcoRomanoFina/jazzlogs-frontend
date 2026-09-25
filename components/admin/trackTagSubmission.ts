@@ -4,6 +4,7 @@ import { apiFetch } from "@/lib/api";
 // version, see StyleTagRequest's comment on the backend.
 export function buildTrackTagSteps(
   tags: {
+    styles: string[];
     moods: string[];
     contexts: string[];
     rhythms: string[];
@@ -12,6 +13,16 @@ export function buildTrackTagSteps(
   trackId: string,
 ) {
   return [
+    {
+      key: "styles",
+      label: `Styles (${tags.styles.length})`,
+      run: async () => {
+        await apiFetch(`/tracks/${trackId}/tags/style`, {
+          method: "PUT",
+          body: JSON.stringify({ styleCodes: tags.styles }),
+        });
+      },
+    },
     {
       key: "moods",
       label: `Moods (${tags.moods.length})`,

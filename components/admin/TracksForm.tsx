@@ -37,7 +37,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 export default function TracksForm() {
   const [submitting, setSubmitting] = useState(false);
   const [reports, setReports] = useState<StepReport[] | null>(null);
-  const [submittedAlbumId, setSubmittedAlbumId] = useState<string | null>(null);
 
   const {
     register,
@@ -47,19 +46,18 @@ export default function TracksForm() {
     formState: { errors },
   } = useForm<TracksFormValues>({
     resolver: zodResolver(tracksFormSchema),
-    defaultValues: { albumId: "", tracks: [] },
+    defaultValues: { tracks: [] },
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "tracks" });
 
   async function handleSave() {
-    const valid = await trigger(["albumId", "tracks"]);
+    const valid = await trigger(["tracks"]);
     if (!valid) return;
 
     setSubmitting(true);
     const values = getValues();
-    setSubmittedAlbumId(values.albumId);
-    const steps = buildTrackSteps(values.tracks, values.albumId);
+    const steps = buildTrackSteps(values.tracks);
     const updated = await submitSteps(steps, setReports);
     setReports(updated);
     setSubmitting(false);
@@ -69,7 +67,7 @@ export default function TracksForm() {
     if (!reports) return;
     setSubmitting(true);
     const values = getValues();
-    const steps = buildTrackSteps(values.tracks, values.albumId);
+    const steps = buildTrackSteps(values.tracks);
     const updated = await retryFailedSteps(steps, reports, setReports);
     setReports(updated);
     setSubmitting(false);
@@ -77,21 +75,6 @@ export default function TracksForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <label className={fieldLabel} htmlFor="albumId">
-          Album ID *
-        </label>
-        <input
-          id="albumId"
-          className={fieldInput}
-          placeholder="UUID del álbum (lo devuelve /admin/albums/new al guardar la ficha)"
-          {...register("albumId")}
-        />
-        {errors.albumId && (
-          <p className={fieldError}>{errors.albumId.message}</p>
-        )}
-      </div>
-
       <div className="flex flex-col gap-3">
         <div className="mb-1 flex items-center justify-between">
           <span className={fieldLabel + " mb-0"}>Tracks</span>
@@ -104,7 +87,7 @@ export default function TracksForm() {
           </button>
         </div>
 
-        <p className="text-xs text-[rgba(233,230,223,.5)]">
+        <p className="text-xs text-[rgba(232,220,192,.5)]">
           Nombre, duración y número de track se traen de Spotify a partir del
           Spotify Track ID.
         </p>
@@ -127,15 +110,6 @@ export default function TracksForm() {
                   </p>
                 )}
               </div>
-
-              <label className="flex items-center gap-2 pb-2.5 text-[13px] text-[rgba(233,230,223,.85)]">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-[rgba(233,230,223,.4)] bg-transparent accent-[#d99b10]"
-                  {...register(`tracks.${index}.standout` as const)}
-                />
-                Standout
-              </label>
 
               <button
                 type="button"
@@ -242,13 +216,13 @@ export default function TracksForm() {
         ))}
 
         {fields.length === 0 && (
-          <p className="text-sm text-[rgba(233,230,223,.5)]">
+          <p className="text-sm text-[rgba(232,220,192,.5)]">
             Todavía no agregaste ningún track.
           </p>
         )}
       </div>
 
-      <div className="flex flex-col gap-4 border-t border-[rgba(233,230,223,.12)] pt-5">
+      <div className="flex flex-col gap-4 border-t border-[rgba(232,220,192,.12)] pt-5">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -273,9 +247,10 @@ export default function TracksForm() {
         {reports && reports.length > 0 && (
           <SubmitReport
             reports={reports}
-            albumId={submittedAlbumId}
+            albumId={null}
             apiUrl={API_URL}
             successMessage="Tracks guardados con éxito."
+            showAlbumLink={false}
           />
         )}
       </div>

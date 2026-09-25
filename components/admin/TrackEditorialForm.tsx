@@ -9,6 +9,7 @@ import {
   type TrackEditorialFormValues,
 } from "@/lib/validations/trackEditorial";
 import { emptyEditorialBlock } from "@/lib/validations/editorialBlock";
+import { EDITORIAL_VOICE_OPTIONS } from "@/lib/editorials";
 import {
   EDITORIAL_BLOCK_TYPES,
   BLOCK_CONTENT_CATEGORY_OPTIONS,
@@ -62,7 +63,8 @@ export default function TrackEditorialForm() {
         body: JSON.stringify({
           title: values.title,
           dek: values.dek,
-          byline: values.byline,
+          logNumber: values.logNumber,
+          byline: values.byline || undefined,
           blocks: values.blocks.map((b) => ({
             type: b.type,
             subhead: b.subhead?.trim() || undefined,
@@ -118,13 +120,32 @@ export default function TrackEditorialForm() {
         </div>
 
         <div>
-          <label className={fieldLabel} htmlFor="byline">
-            Byline *
+          <label className={fieldLabel} htmlFor="logNumber">
+            Log number *
           </label>
-          <input id="byline" className={fieldInput} {...register("byline")} />
-          {errors.byline && (
-            <p className={fieldError}>{errors.byline.message}</p>
+          <input
+            id="logNumber"
+            className={fieldInput}
+            placeholder="042"
+            {...register("logNumber")}
+          />
+          {errors.logNumber && (
+            <p className={fieldError}>{errors.logNumber.message}</p>
           )}
+        </div>
+
+        <div>
+          <label className={fieldLabel} htmlFor="byline">
+            Byline
+          </label>
+          <select id="byline" className={fieldSelect} {...register("byline")}>
+            <option value="">— (defaults to Jazzlogs)</option>
+            {EDITORIAL_VOICE_OPTIONS.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -210,7 +231,7 @@ export default function TrackEditorialForm() {
           ))}
 
           {fields.length === 0 && (
-            <p className="text-sm text-[rgba(233,230,223,.5)]">
+            <p className="text-sm text-[rgba(232,220,192,.5)]">
               Todavía no agregaste ningún bloque.
             </p>
           )}
@@ -225,7 +246,7 @@ export default function TrackEditorialForm() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[rgba(233,230,223,.12)] pt-5">
+      <div className="flex flex-col gap-3 border-t border-[rgba(232,220,192,.12)] pt-5">
         <button
           type="button"
           className={btnPrimary + " self-start"}

@@ -50,14 +50,14 @@ export default function LoadingNotes({
       >
         <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-col gap-[4px]">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-px w-full bg-[rgba(233,230,223,.15)]" />
+            <div key={i} className="h-px w-full bg-[rgba(232,220,192,.15)]" />
           ))}
         </div>
         {NOTES.map((note, i) => (
           <span
             key={i}
             className={
-              "relative animate-[jazzlogs-note-bounce_1.1s_ease-in-out_infinite] text-[#d99b10] " +
+              "relative animate-[jazzlogs-note-bounce_1.1s_ease-in-out_infinite] text-[#F6D013] " +
               (compact ? "text-[18px]" : "text-[28px]")
             }
             style={{ animationDelay: `${i * 0.14}s` }}
@@ -68,7 +68,7 @@ export default function LoadingNotes({
       </div>
       <div
         key={index}
-        className="animate-[jazzlogs-fade-up_.3s_ease-out] font-[family-name:var(--font-dm-mono)] text-[10.5px] font-medium uppercase tracking-[.2em] text-[rgba(233,230,223,.5)]"
+        className="animate-[jazzlogs-fade-up_.3s_ease-out] font-[family-name:var(--font-dm-sans)] text-[10.5px] font-medium uppercase tracking-[.2em] text-[rgba(232,220,192,.5)]"
       >
         {messages[index]}
       </div>

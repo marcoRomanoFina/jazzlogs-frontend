@@ -72,16 +72,16 @@ export default function CreateArtistForm() {
           onChange={(e) => setSpotifyArtistId(e.target.value)}
           placeholder="0kbYTNQb4Pb1rPbbaF0pT4"
         />
-        <p className="mt-1 text-xs text-[rgba(233,230,223,.5)]">
+        <p className="mt-1 text-xs text-[rgba(232,220,192,.5)]">
           Nombre, imagen y URL se traen de Spotify automáticamente — el ID está
           en la URL del artista en Spotify (open.spotify.com/artist/&lt;id&gt;).
         </p>
       </div>
 
-      <div className="flex items-center gap-3 text-xs text-[rgba(233,230,223,.4)]">
-        <div className="h-px flex-1 bg-[rgba(233,230,223,.15)]" />
+      <div className="flex items-center gap-3 text-xs text-[rgba(232,220,192,.4)]">
+        <div className="h-px flex-1 bg-[rgba(232,220,192,.15)]" />
         o, si no está en Spotify
-        <div className="h-px flex-1 bg-[rgba(233,230,223,.15)]" />
+        <div className="h-px flex-1 bg-[rgba(232,220,192,.15)]" />
       </div>
 
       <div>
@@ -95,7 +95,7 @@ export default function CreateArtistForm() {
           onChange={(e) => setName(e.target.value)}
           placeholder="Ej: un sideman sin presencia en Spotify"
         />
-        <p className="mt-1 text-xs text-[rgba(233,230,223,.5)]">
+        <p className="mt-1 text-xs text-[rgba(232,220,192,.5)]">
           Fallback manual — sin Spotify ID el artista se crea sin imagen ni URL
           de Spotify.
         </p>
@@ -114,7 +114,7 @@ export default function CreateArtistForm() {
       )}
 
       {state.status === "done" && (
-        <div className="flex items-center gap-4 rounded-xl border border-[rgba(233,230,223,.15)] bg-[rgba(233,230,223,.03)] p-4">
+        <div className="flex items-center gap-4 rounded-xl border border-[rgba(232,220,192,.15)] bg-[rgba(232,220,192,.03)] p-4">
           {state.artist.imageUrl && (
             <Image
               src={state.artist.imageUrl}
@@ -126,10 +126,10 @@ export default function CreateArtistForm() {
             />
           )}
           <div>
-            <p className="font-medium text-[#e9e6df]">{state.artist.name}</p>
-            <p className="mt-1 font-mono text-xs text-[rgba(233,230,223,.6)]">
+            <p className="font-medium text-[#E8DCC0]">{state.artist.name}</p>
+            <p className="mt-1 font-mono text-xs text-[rgba(232,220,192,.6)]">
               Artist ID:{" "}
-              <span className="select-all text-[#d99b10]">
+              <span className="select-all text-[#F6D013]">
                 {state.artist.id}
               </span>
             </p>

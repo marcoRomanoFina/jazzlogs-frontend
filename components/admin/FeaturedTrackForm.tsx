@@ -66,7 +66,7 @@ export default function FeaturedTrackForm() {
         />
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[rgba(233,230,223,.12)] pt-5">
+      <div className="flex flex-col gap-3 border-t border-[rgba(232,220,192,.12)] pt-5">
         <div className="flex flex-wrap gap-3">
           <button
             type="button"

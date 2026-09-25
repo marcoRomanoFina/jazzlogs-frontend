@@ -1,4 +1,4 @@
-import { archivo, dmMono } from "@/lib/fonts";
+import { dmSans, fraunces, newsreader } from "@/lib/fonts";
 import Sidebar from "@/components/app/Sidebar";
 import AppContent from "@/components/app/AppContent";
 import { SidebarProvider } from "@/components/app/SidebarContext";
@@ -10,7 +10,7 @@ export default function AppShellLayout({
 }) {
   return (
     <div
-      className={`${archivo.variable} ${dmMono.variable} min-h-screen bg-[#1c1b18] font-[family-name:var(--font-archivo)] text-[#e9e6df]`}
+      className={`${dmSans.variable} ${fraunces.variable} ${newsreader.variable} min-h-screen bg-[#1C1A14] font-[family-name:var(--font-dm-sans)] text-[#E8DCC0]`}
     >
       <SidebarProvider>
         <Sidebar />

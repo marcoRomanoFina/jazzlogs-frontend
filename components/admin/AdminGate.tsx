@@ -42,7 +42,7 @@ export default function AdminGate({
   if (status !== "authorized") {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-[rgba(233,230,223,.6)]">
+        <p className="text-sm text-[rgba(232,220,192,.6)]">
           {status === "checking" ? "Verificando acceso…" : "Redirigiendo…"}
         </p>
       </div>
@@ -55,7 +55,7 @@ export default function AdminGate({
         <div className="mx-auto max-w-4xl px-6 pt-6">
           <Link
             href="/admin"
-            className="text-sm text-[rgba(233,230,223,.6)] transition-colors hover:text-[#d99b10]"
+            className="text-sm text-[rgba(232,220,192,.6)] transition-colors hover:text-[#F6D013]"
           >
             ← Panel de admin
           </Link>

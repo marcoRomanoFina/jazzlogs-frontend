@@ -5,10 +5,10 @@ export default function ArtistTagsPage() {
   return (
     <AdminGate>
       <div className="mx-auto max-w-2xl px-6 py-12">
-        <h1 className="text-2xl font-extrabold tracking-[-.02em]">
+        <h1 className="font-[family-name:var(--font-fraunces)] text-2xl font-extrabold tracking-[-.02em]">
           Tags de artista
         </h1>
-        <p className="mt-1 mb-8 text-sm text-[rgba(233,230,223,.6)]">
+        <p className="mt-1 mb-8 text-sm text-[rgba(232,220,192,.6)]">
           Herramienta interna — cargá el instrumento principal, styles y
           contexts de un artista existente a partir de su Artist ID.
         </p>

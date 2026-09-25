@@ -95,7 +95,7 @@ export default function Home() {
               {me?.role === "ADMIN" && (
                 <Link
                   href="/admin"
-                  className="rounded-full bg-[#d99b10] px-5 py-2 text-sm font-bold text-[#1c1b18]"
+                  className="rounded-full bg-[#F6D013] px-5 py-2 text-sm font-bold text-[#1C1A14]"
                 >
                   Panel de admin →
                 </Link>
